@@ -1,21 +1,29 @@
 extern crate nom;
 
-use crate::Expr::{Cons, Nil};
+use nom::{*};
+use std::str::FromStr;
+use crate::Expr::{Root, Value};
 
 
 #[derive(Debug)]
 enum Expr {
-    Cons(i32, Box<Expr>),
+    Root(char, Box<Expr>, Box<Expr>),
+    Value(i32),
     Nil,
 }
 
-fn parse_expr(input: &str) -> Result<
 
+
+
+fn parse(input: &str) -> IResult<&str, &str> {
+
+    // i32::from_str(nom::character::complete::digit1(input).unwrap()).unwrap();
+    nom::character::complete::digit1(input)
+}
 
 
 
 fn main() {
-let expr = 
-//   let x = 1 + 2 + 1;
-//   println!("x = {:?}", x);
+    let x = "1 + 2 + 1";
+    println!("x = {:?}", parse(x).unwrap());
 }
