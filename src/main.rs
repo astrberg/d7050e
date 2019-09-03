@@ -1,6 +1,10 @@
 extern crate nom;
 
-use nom::{*};
+use nom::sequence::tuple;
+use nom::{IResult,
+character::complete::{alpha1, digit1}
+};
+
 use std::str::FromStr;
 use crate::Expr::{Root, Value};
 
@@ -18,7 +22,7 @@ enum Expr {
 fn parse(input: &str) -> IResult<&str, &str> {
 
     // i32::from_str(nom::character::complete::digit1(input).unwrap()).unwrap();
-    nom::character::complete::digit1(input)
+    digit1(input)
 }
 
 
