@@ -18,12 +18,17 @@ enum Op {
     Sub,
     Div,
     Modulo,
+    Nil
 }
 
-fn get_op(input: &str) -> IResult(Option<usize>, Op) {
-    alt((
-        (input.find_substring("+"), Op::Add),
-        (input.find_substring("*"), Op::Mult)))
+fn get_op(input: &str) -> (Option<usize>, Op) {
+
+    match input.find_substring("+") {
+        None => (None, Op::Nil),
+        Some(op) => (Option<usize>, Op::Add)
+    }
+       
+        
 }
 
 fn parse_digit(input: &str) -> IResult<&str, &str> {
@@ -40,10 +45,10 @@ fn build_tree(input: &str) -> Tree {
     if input.is_empty() {
         tree = Tree::Nil;
     } else if input.len() == 1 {
-        let left_value_str = parse_digit(input).unwrap().1;
+        let left_value_str = parse_digit(input).expect("Could not parse left_value_str on len 1").1;
         tree = Tree::Num(to_i32(left_value_str).unwrap());
     } else {
-        let (right_substring, left_value_str) = parse_digit(input).unwrap();
+        let (right_substring, left_value_str) = parse_digit(input).expect("Could not parse_digit right_substring and left_value_str");
         let (pos, op) = get_op(right_substring);
         let right_value_str = &right_substring[pos.unwrap() + 1..];
         tree = Tree::BinOp(
@@ -56,7 +61,7 @@ fn build_tree(input: &str) -> Tree {
 }
 
 fn main() {
-    let input = "1+2";
+    let input = "10";
 
     println!("{:#?}", build_tree(input));
 }
