@@ -1,19 +1,29 @@
 #[macro_use] extern crate lalrpop_util;
 
-lalrpop_mod!(pub calculator2b);
+
+
+pub mod ast;
+
+lalrpop_mod!(pub calculator6);
+
 #[test]
-fn calculator2b() {
-    // These will all work:
+fn calculator6() {
+    let mut errors = Vec::new();
 
-    let result = calculator2b::TermParser::new().parse("33").unwrap();
-    assert_eq!(result, "33");
+    let expr = calculator6::ExprsParser::new()
+        .parse(&mut errors, "22 * + 3")
+        .unwrap();
+    assert_eq!(&format!("{:?}", expr), "[((22 * error) + 3)]");
 
-    let result = calculator2b::TermParser::new().parse("foo33").unwrap();
-    assert_eq!(result, "Id(foo33)");
+    let expr = calculator6::ExprsParser::new()
+        .parse(&mut errors, "22 * 44 + 66, *3")
+        .unwrap();
+    assert_eq!(&format!("{:?}", expr), "[((22 * 44) + 66), (error * 3)]");
 
-    let result = calculator2b::TermParser::new().parse("(foo33)").unwrap();
-    assert_eq!(result, "Id(foo33)");
+    let expr = calculator6::ExprsParser::new()
+        .parse(&mut errors, "*")
+        .unwrap();
+    assert_eq!(&format!("{:?}", expr), "[(error * error)]");
 
-    let result = calculator2b::TermParser::new().parse("(22)").unwrap();
-    assert_eq!(result, "Twenty-two!");
+    assert_eq!(errors.len(), 4);
 }
