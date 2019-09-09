@@ -7,19 +7,33 @@ pub enum Expr {
     Error,
 }
 
-#[derive(Debug)]
-pub struct Function {
-    pub name: String,
-    pub params: String,
-    pub typ: String,
-}
-
 pub enum Op {
     Mul,
     Div,
     Add,
     Sub,
 }
+
+pub struct Function {
+    pub name: String,
+    pub params: Vec<Params>,
+    pub data_type: Type,
+}
+
+pub struct Params {
+    pub name: String,
+    pub data_type: Vec<String>,
+}
+
+pub enum Type {
+    Int,
+    Bool,
+    Str,
+    Empty
+}
+
+
+
 
 impl Debug for Op {
     fn fmt(&self, fmt: &mut Formatter) -> Result<(), Error> {

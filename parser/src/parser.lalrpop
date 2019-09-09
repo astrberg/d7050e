@@ -35,13 +35,15 @@ Num: i32 = {
 }
 
 pub Function: Function = {
-    FUNCTION <name:Name> "(" <params:Params> ")" "->" <typ:Typ> => Function{name, params, typ},
+    "fn" <name:Name> "(" <params:  ":" <Params>> ")" "->" <data_type:Data_type> => Function{name, params, data_type},
 
 
 }
 
+Params: (name, Data_type)
+
 Name: String = {
-    IDENTIFIER => <>.to_string(),
+    r"[a-zA-Z_][a-zA-Z0-9_]*" => <>.to_string()
 }
 
 Params: String = {
@@ -50,15 +52,16 @@ Params: String = {
 
 }
 
-Typ: String = {
-    IDENTIFIER => <>.to_string(),
+Data_type: Data_type = {
+    "i32" => Type::Int,
 }
 
 
-match {
-    r"[-]?[0-9]+"
-} else {
-    r"(?i)fn\s" => FUNCTION,
-    r"[\w_][\w_\d]*" => IDENTIFIER,
-    _
-}
+
+//match {
+//    r"[-]?[0-9]+"
+//} else {
+//    r"(?i)fn\s" => FUNCTION,
+//    r"[\w_][\w_\d]*" => IDENTIFIER,
+//    _
+//}
