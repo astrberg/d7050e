@@ -1,0 +1,64 @@
+use std::str::FromStr;
+use crate::ast::*;
+
+grammar;
+
+
+
+pub Expr: Box<Expr> = { 
+    Expr ExprOp Factor => Box::new(Expr::Op(<>)),
+    Factor,
+}
+
+ExprOp: Op = { 
+    "+" => Op::Add,
+    "-" => Op::Sub,
+}
+
+Factor: Box<Expr> = {
+    Factor FactorOp Term => Box::new(Expr::Op(<>)),
+    Term,
+}
+
+FactorOp: Op = {
+    "*" => Op::Mul,
+    "/" => Op::Div,
+}
+
+Term: Box<Expr> = {
+    Num => Box::new(Expr::Number(<>)),
+    "(" <Expr> ")"
+}
+
+Num: i32 = {
+    <n:r"[-]?[0-9]+"> => i32::from_str(n).unwrap(),
+}
+
+pub Function: Function = {
+    FUNCTION <name:Name> "(" <params:Params> ")" "->" <typ:Typ> => Function{name, params, typ},
+
+
+}
+
+Name: String = {
+    IDENTIFIER => <>.to_string(),
+}
+
+Params: String = {
+    r" " => <>.to_string(),
+    IDENTIFIER => <>.to_string(),
+
+}
+
+Typ: String = {
+    IDENTIFIER => <>.to_string(),
+}
+
+
+match {
+    r"[-]?[0-9]+"
+} else {
+    r"(?i)fn\s" => FUNCTION,
+    r"[\w_][\w_\d]*" => IDENTIFIER,
+    _
+}
