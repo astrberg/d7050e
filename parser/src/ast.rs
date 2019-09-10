@@ -19,7 +19,7 @@ pub enum Statement {
     Let(String, String, Box<Expr>),
     If(Box<Expr>, String),
     Return(Box<Expr>),
-    Else,
+    Else(Box<Expr>),
     While,
 
 }

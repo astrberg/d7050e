@@ -6,7 +6,7 @@ lalrpop_mod!(pub parser);
 fn main() {
 
     let stmt = parser::FunctionDecParser::new()
-        .parse("fn test(a:i32, i:bool) -> hej{return 2+4 - 1;}")
+        .parse("fn test(a:i32, i:bool) -> hej{let a : i32 = 6+2*3}")
         .unwrap();
     println!("{:#?}", stmt);
     // let stmt = parser::LetParser::new()

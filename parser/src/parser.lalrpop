@@ -44,9 +44,11 @@ Params: Params = {
 }
 
 pub Statement: Box<Statement> = {
-    "let" <name:String> ":" <data_type:String> "=" <expr:Expr> => Box::new(Statement::Let(<>)),
+    "let" <name:String> ":" <data_type:String> "=" <expr:Expr> ";" => Box::new(Statement::Let(<>)),
     "if" <cond:Expr> "{" <body:String> "}" => Box::new(Statement::If(<>)),
-    "return" <expr:Expr> ";" => Box::new(Statement::Return(<>))
+    "else" "{" <body:Expr> "}" => Box::new(Statement::Else(<>)),
+    "return" <expr:Expr> ";" => Box::new(Statement::Return(<>)),
+
     
 }
 
