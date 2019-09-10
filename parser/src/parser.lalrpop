@@ -34,28 +34,33 @@ Num: i32 = {
     <n:r"[-]?[0-9]+"> => i32::from_str(n).unwrap(),
 }
 
-pub Function: Function = {
-    "fn" <name:Name> "(" <params:  ":" <Params>> ")" "->" <data_type:Data_type> => Function{name, params, data_type},
-
+pub Function: Box<Function> = {
+    "fn" <name:String> "(" <params:Comma<Params>> ")" "->" <return_type:String> "{" <body:String> "}" => Box::new(Function{name, params, return_type, body}),
 
 }
 
-Params: (name, Data_type)
+pub Let: String = {
+    "let" <name:String> "=" <assignment:String> => Box::new(Assignment::<>)
+}
 
-Name: String = {
+Params: Params = {
+    <name:String> ":" <data_type:String> => Params{<>}
+}
+
+String: String = {
     r"[a-zA-Z_][a-zA-Z0-9_]*" => <>.to_string()
 }
 
-Params: String = {
-    r" " => <>.to_string(),
-    IDENTIFIER => <>.to_string(),
-
+Comma<T>:Vec<T> = {
+    <v:(<T> ",")*> <e:T?> => match e {
+        None => v,
+        Some(e) => {
+            let mut v = v;
+            v.push(e);
+            v
+        }
+    }
 }
-
-Data_type: Data_type = {
-    "i32" => Type::Int,
-}
-
 
 
 //match {

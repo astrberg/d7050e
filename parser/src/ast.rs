@@ -7,30 +7,38 @@ pub enum Expr {
     Error,
 }
 
+pub enum Assignment {
+    Name(String),
+    Expr(Expr)
+}
+
 pub enum Op {
     Mul,
     Div,
     Add,
     Sub,
 }
-
+#[derive(Debug)]
 pub struct Function {
     pub name: String,
     pub params: Vec<Params>,
-    pub data_type: Type,
+    pub return_type: String,
+    pub body: String,
 }
 
+#[derive(Debug)]
 pub struct Params {
     pub name: String,
-    pub data_type: Vec<String>,
+    pub data_type: String,
 }
 
-pub enum Type {
-    Int,
-    Bool,
-    Str,
-    Empty
-}
+
+// pub enum Type {
+//     Int,
+//     Bool,
+//     Str,
+//     Empty
+// }
 
 
 
