@@ -7,10 +7,6 @@ pub enum Expr {
     Error,
 }
 
-pub enum Assignment {
-    Name(String),
-    Expr(Expr)
-}
 
 pub enum Op {
     Mul,
@@ -19,12 +15,23 @@ pub enum Op {
     Sub,
 }
 #[derive(Debug)]
-pub struct Function {
+pub enum Statement {
+    Let(String, String, Box<Expr>),
+    If(Box<Expr>, String),
+    Return(Box<Expr>),
+    Else,
+    While,
+
+}
+
+#[derive(Debug)]
+pub struct FunctionDec {
     pub name: String,
     pub params: Vec<Params>,
     pub return_type: String,
-    pub body: String,
+    pub body: Box<Statement>,
 }
+
 
 #[derive(Debug)]
 pub struct Params {

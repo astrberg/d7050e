@@ -5,14 +5,23 @@ lalrpop_mod!(pub parser);
 
 fn main() {
 
-    // let stmt = parser::FunctionParser::new()
-    //     .parse("fn test() -> hej{gustaf}")
-    //     .unwrap();
-    // println!("{:#?}", stmt);
-    let stmt = parser::LetParser::new()
-            .parse("let a = 6+8")
-            .unwrap();
+    let stmt = parser::FunctionDecParser::new()
+        .parse("fn test(a:i32, i:bool) -> hej{return 2+4 - 1;}")
+        .unwrap();
     println!("{:#?}", stmt);
+    // let stmt = parser::LetParser::new()
+    //         .parse("let a : i32 = 6+2*3")
+    //         .unwrap();
+    // println!("{:#?}", stmt);
+    // let stmt = parser::StatementParser::new()
+    //         .parse("if 5+3{hej}")
+    //         .unwrap();
+    // println!("{:#?}", stmt);
+
+    // let stmt = parser::StatementParser::new()
+    //         .parse("return 20*10;")
+    //         .unwrap();
+    // println!("{:#?}", stmt);
 
     // let expr = parser::ExprParser::new()
     //     .parse("-22+(-2)*3  +   1000            + 10")

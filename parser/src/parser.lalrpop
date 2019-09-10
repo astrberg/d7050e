@@ -5,7 +5,7 @@ grammar;
 
 
 
-pub Expr: Box<Expr> = { 
+pub Expr: Box<Expr> = {
     Expr ExprOp Factor => Box::new(Expr::Op(<>)),
     Factor,
 }
@@ -34,18 +34,22 @@ Num: i32 = {
     <n:r"[-]?[0-9]+"> => i32::from_str(n).unwrap(),
 }
 
-pub Function: Box<Function> = {
-    "fn" <name:String> "(" <params:Comma<Params>> ")" "->" <return_type:String> "{" <body:String> "}" => Box::new(Function{name, params, return_type, body}),
+pub FunctionDec: Box<FunctionDec> = {
+    "fn" <name:String> "(" <params:Comma<Params>> ")" "->" <return_type:String> "{" <body:Statement> "}" => Box::new(FunctionDec{name, params, return_type, body}),
 
-}
-
-pub Let: String = {
-    "let" <name:String> "=" <assignment:String> => Box::new(Assignment::<>)
 }
 
 Params: Params = {
     <name:String> ":" <data_type:String> => Params{<>}
 }
+
+pub Statement: Box<Statement> = {
+    "let" <name:String> ":" <data_type:String> "=" <expr:Expr> => Box::new(Statement::Let(<>)),
+    "if" <cond:Expr> "{" <body:String> "}" => Box::new(Statement::If(<>)),
+    "return" <expr:Expr> ";" => Box::new(Statement::Return(<>))
+    
+}
+
 
 String: String = {
     r"[a-zA-Z_][a-zA-Z0-9_]*" => <>.to_string()
