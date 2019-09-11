@@ -3,24 +3,24 @@ use crate::ast::*;
 
 grammar;
 
-
+pub Program = <FunctionDec*>;
 
 pub Expr: Box<Expr> = {
-    Expr ExprOp Factor => Box::new(Expr::Op(<>)),
+    Expr ExprBinOp Factor => Box::new(Expr::BinOp(<>)),
     Factor,
 }
 
-ExprOp: Op = { 
+ExprBinOp: Op = { 
     "+" => Op::Add,
     "-" => Op::Sub,
 }
 
 Factor: Box<Expr> = {
-    Factor FactorOp Term => Box::new(Expr::Op(<>)),
+    Factor FactorBinOp Term => Box::new(Expr::BinOp(<>)),
     Term,
 }
 
-FactorOp: Op = {
+FactorBinOp: Op = {
     "*" => Op::Mul,
     "/" => Op::Div,
 }
@@ -34,26 +34,29 @@ Num: i32 = {
     <n:r"[-]?[0-9]+"> => i32::from_str(n).unwrap(),
 }
 
-pub FunctionDec: Box<FunctionDec> = {
-    "fn" <name:String> "(" <params:Comma<Params>> ")" "->" <return_type:String> "{" <body:Statement> "}" => Box::new(FunctionDec{name, params, return_type, body}),
+FunctionDec: Box<FunctionDec> = {
+    "fn" <name:Id> "(" <params:Comma<Params>> ")" "->" <return_type:Assign> "{" <body:Statement*> "}" => Box::new(FunctionDec{name, params, return_type, body}),
 
 }
 
 Params: Params = {
-    <name:String> ":" <data_type:String> => Params{<>}
+    <name:Id> ":" <data_type:Assign> => Params{<>}
 }
 
-pub Statement: Box<Statement> = {
-    "let" <name:String> ":" <data_type:String> "=" <expr:Expr> ";" => Box::new(Statement::Let(<>)),
-    "if" <cond:Expr> "{" <body:String> "}" => Box::new(Statement::If(<>)),
-    "else" "{" <body:Expr> "}" => Box::new(Statement::Else(<>)),
-    "return" <expr:Expr> ";" => Box::new(Statement::Return(<>)),
+Statement: Box<Statement> = {
+    "let" <name:Id> ":" <data_type:Assign> "=" <expr:Expr> ";" => Box::new(Statement::Let(<>)),
+    "if" <cond:Expr> "{" <body:Statement*> "}" => Box::new(Statement::If(<>)),
+    "else" "{" <body:Statement*> "}" => Box::new(Statement::Else(<>)),
+    "while" <cond:Expr> "{" <body:Statement*> "}" => Box::new(Statement::While(<>)),
+    "return" <expr:Expr> ";" => Box::new(Statement::Return(expr)),
 
-    
+}
+Assign: Type = {
+    "i32" => Type::I32,
+    "bool" => Type::Bool,
 }
 
-
-String: String = {
+Id: String = {
     r"[a-zA-Z_][a-zA-Z0-9_]*" => <>.to_string()
 }
 

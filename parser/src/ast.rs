@@ -1,12 +1,18 @@
 use std::fmt::{Debug, Error, Formatter};
 
 #[derive(Debug)]
-pub enum Expr {
-    Number(i32),
-    Op(Box<Expr>, Op, Box<Expr>),
-    Error,
+pub enum Type {
+    I32,
+    Bool,
 }
 
+
+#[derive(Debug)]
+pub enum Expr {
+    Number(i32),
+    BinOp(Box<Expr>, Op, Box<Expr>),
+    Error,
+}
 
 pub enum Op {
     Mul,
@@ -15,12 +21,12 @@ pub enum Op {
     Sub,
 }
 #[derive(Debug)]
-pub enum Statement {
-    Let(String, String, Box<Expr>),
-    If(Box<Expr>, String),
+pub enum Statement { 
+    Let(String, Type, Box<Expr>),
+    If(Box<Expr>, Vec<Box<Statement>>),
     Return(Box<Expr>),
-    Else(Box<Expr>),
-    While,
+    Else(Vec<Box<Statement>>),
+    While(Box<Expr>, Vec<Box<Statement>>),
 
 }
 
@@ -28,15 +34,15 @@ pub enum Statement {
 pub struct FunctionDec {
     pub name: String,
     pub params: Vec<Params>,
-    pub return_type: String,
-    pub body: Box<Statement>,
+    pub return_type: Type,
+    pub body: Vec<Box<Statement>>,
 }
 
 
 #[derive(Debug)]
 pub struct Params {
     pub name: String,
-    pub data_type: String,
+    pub data_type: Type,
 }
 
 
