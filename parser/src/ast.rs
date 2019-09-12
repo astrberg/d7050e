@@ -4,13 +4,15 @@ use std::fmt::{Debug, Error, Formatter};
 pub enum Type {
     I32,
     Bool,
+    String,
 }
 
 
 #[derive(Debug)]
 pub enum Expr {
     Number(i32),
-    BinOp(Box<Expr>, Op, Box<Expr>),
+    Var(String),
+    Op(Box<Expr>, Op, Box<Expr>),
     Error,
 }
 
@@ -19,10 +21,20 @@ pub enum Op {
     Div,
     Add,
     Sub,
+
+    Equal,
+    AddEq,
+    SubEq,
+    DivEq,
+    MulEq,
+
+    GreaterThan,
+    LessThan,
+
 }
 #[derive(Debug)]
 pub enum Statement { 
-    Let(String, Type, Box<Expr>),
+    Let(String, Type, Op, Box<Expr>),
     If(Box<Expr>, Vec<Box<Statement>>),
     Return(Box<Expr>),
     Else(Vec<Box<Statement>>),
@@ -45,17 +57,6 @@ pub struct Params {
     pub data_type: Type,
 }
 
-
-// pub enum Type {
-//     Int,
-//     Bool,
-//     Str,
-//     Empty
-// }
-
-
-
-
 impl Debug for Op {
     fn fmt(&self, fmt: &mut Formatter) -> Result<(), Error> {
         use self::Op::*;
@@ -64,6 +65,17 @@ impl Debug for Op {
             Div => write!(fmt, "/"),
             Add => write!(fmt, "+"),
             Sub => write!(fmt, "-"),
+
+            Equal => write!(fmt, "="),
+            AddEq => write!(fmt, "+="),
+            SubEq => write!(fmt, "-="),
+            DivEq => write!(fmt, "/="),
+            MulEq => write!(fmt, "*="),
+
+            GreaterThan => write!(fmt, ">"),
+            LessThan => write!(fmt, "<"),
+
+    
         }
     }
 }

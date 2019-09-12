@@ -6,7 +6,8 @@ grammar;
 pub Program = <FunctionDec*>;
 
 pub Expr: Box<Expr> = {
-    Expr ExprBinOp Factor => Box::new(Expr::BinOp(<>)),
+    Cond,
+    Expr ExprBinOp Factor => Box::new(Expr::Op(<>)),
     Factor,
 }
 
@@ -16,7 +17,7 @@ ExprBinOp: Op = {
 }
 
 Factor: Box<Expr> = {
-    Factor FactorBinOp Term => Box::new(Expr::BinOp(<>)),
+    Factor FactorBinOp Term => Box::new(Expr::Op(<>)),
     Term,
 }
 
@@ -27,6 +28,7 @@ FactorBinOp: Op = {
 
 Term: Box<Expr> = {
     Num => Box::new(Expr::Number(<>)),
+    Id => Box::new(Expr::Var(<>)),
     "(" <Expr> ")"
 }
 
@@ -35,23 +37,41 @@ Num: i32 = {
 }
 
 FunctionDec: Box<FunctionDec> = {
-    "fn" <name:Id> "(" <params:Comma<Params>> ")" "->" <return_type:Assign> "{" <body:Statement*> "}" => Box::new(FunctionDec{name, params, return_type, body}),
+    "fn" <name:Id> "(" <params:Comma<Params>> ")" "->" <return_type:Type> "{" <body:Statement*> "}" => Box::new(FunctionDec{name, params, return_type, body}),
 
 }
 
 Params: Params = {
-    <name:Id> ":" <data_type:Assign> => Params{<>}
+    <name:Id> ":" <data_type:Type> => Params{<>}
 }
 
 Statement: Box<Statement> = {
-    "let" <name:Id> ":" <data_type:Assign> "=" <expr:Expr> ";" => Box::new(Statement::Let(<>)),
+    "let" <name:Id> ":" <data_type:Type> <op:Assign> <expr:Expr> ";" => Box::new(Statement::Let(<>)),
     "if" <cond:Expr> "{" <body:Statement*> "}" => Box::new(Statement::If(<>)),
     "else" "{" <body:Statement*> "}" => Box::new(Statement::Else(<>)),
     "while" <cond:Expr> "{" <body:Statement*> "}" => Box::new(Statement::While(<>)),
     "return" <expr:Expr> ";" => Box::new(Statement::Return(expr)),
 
 }
-Assign: Type = {
+Cond: Box<Expr> = {
+    Expr CondOp Expr => Box::new(Expr, Expr::Op(<>))
+
+}
+
+CondOp: Op = {
+    ">" => Op::GreaterThan,
+    "<" => Op::LessThan,
+}
+
+Assign: Op = {
+    "=" => Op::Equal,
+    "+=" => Op::AddEq,
+    "-=" => Op::SubEq,
+    "/=" => Op::DivEq,
+    "*=" => Op::MulEq,
+}
+
+Type: Type = {
     "i32" => Type::I32,
     "bool" => Type::Bool,
 }

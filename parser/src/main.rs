@@ -61,22 +61,26 @@ fn main() {
     //         }")
     //         .unwrap();
     // println!("{:#?}", stmt);
-    let stmt = parser::ProgramParser::new()
-            .parse("fn test(a:i32, i:bool) -> i32{ 
-                if 5+3 {
-                    return 2;
-                }
-            }")
-            .unwrap();
-    println!("{:#?}", stmt);
+    // let stmt = parser::ProgramParser::new()
+    //         .parse("fn test(a:i32, i:bool) -> i32{ 
+    //             if 5+3 {
+    //                 return 2;
+    //             }
+    //         }")
+    //         .unwrap();
+    // println!("{:#?}", stmt);
 
     // let stmt = parser::StatementParser::new()
     //         .parse("return 20*10;")
     //         .unwrap();
     // println!("{:#?}", stmt);
 
-    // let expr = parser::ExprParser::new()
-    //     .parse("-22+(-2)*3  +   1000            + 10")
-    //     .unwrap();
-    // println!("{:#?}", expr);
+    let expr = parser::ProgramParser::new()
+        .parse("fn test(a:i32) -> i32{ 
+        if a < b {
+            return b;
+        }
+        }")
+        .unwrap();
+    println!("{:#?}", expr);
 }
