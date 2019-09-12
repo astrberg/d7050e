@@ -76,9 +76,14 @@ fn main() {
     // println!("{:#?}", stmt);
 
     let expr = parser::ProgramParser::new()
-        .parse("fn test(a:i32) -> i32{ 
-        if a < b {
-            return b;
+        .parse("fn test(a:i32) -> String { 
+        if 5+3 > 1 {
+            let a:bool = true;
+            while true {
+                return 1;
+            }
+        } else {
+            return 3;
         }
         }")
         .unwrap();

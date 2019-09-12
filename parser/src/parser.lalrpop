@@ -5,37 +5,6 @@ grammar;
 
 pub Program = <FunctionDec*>;
 
-pub Expr: Box<Expr> = {
-    Cond,
-    Expr ExprBinOp Factor => Box::new(Expr::Op(<>)),
-    Factor,
-}
-
-ExprBinOp: Op = { 
-    "+" => Op::Add,
-    "-" => Op::Sub,
-}
-
-Factor: Box<Expr> = {
-    Factor FactorBinOp Term => Box::new(Expr::Op(<>)),
-    Term,
-}
-
-FactorBinOp: Op = {
-    "*" => Op::Mul,
-    "/" => Op::Div,
-}
-
-Term: Box<Expr> = {
-    Num => Box::new(Expr::Number(<>)),
-    Id => Box::new(Expr::Var(<>)),
-    "(" <Expr> ")"
-}
-
-Num: i32 = {
-    <n:r"[-]?[0-9]+"> => i32::from_str(n).unwrap(),
-}
-
 FunctionDec: Box<FunctionDec> = {
     "fn" <name:Id> "(" <params:Comma<Params>> ")" "->" <return_type:Type> "{" <body:Statement*> "}" => Box::new(FunctionDec{name, params, return_type, body}),
 
@@ -46,24 +15,33 @@ Params: Params = {
 }
 
 Statement: Box<Statement> = {
-    "let" <name:Id> ":" <data_type:Type> <op:Assign> <expr:Expr> ";" => Box::new(Statement::Let(<>)),
-    "if" <cond:Expr> "{" <body:Statement*> "}" => Box::new(Statement::If(<>)),
+    "let" <name:Id> ":" <data_type:Type> <op:AssignOp> <expr:Expr> ";" => Box::new(Statement::Let(<>)),
+    "if" <cond:Cond> "{" <body:Statement*> "}" => Box::new(Statement::If(<>)),
     "else" "{" <body:Statement*> "}" => Box::new(Statement::Else(<>)),
-    "while" <cond:Expr> "{" <body:Statement*> "}" => Box::new(Statement::While(<>)),
+    "while" <cond:Cond> "{" <body:Statement*> "}" => Box::new(Statement::While(<>)),
     "return" <expr:Expr> ";" => Box::new(Statement::Return(expr)),
 
 }
-Cond: Box<Expr> = {
-    Expr CondOp Expr => Box::new(Expr, Expr::Op(<>))
 
-}
+Cond = Tier<CondOp, Expr>;
+Expr = Tier<ExprOp, Factor>;
+Factor = Tier<FactorOp, Term>;
+
+Tier<Op,NextTier>: Box<Expr> = {
+    Tier<Op,NextTier> Op NextTier => Box::new(Expr::Op(<>)),
+    NextTier
+};
 
 CondOp: Op = {
+    "&&" => Op::And,
+    "||" => Op::Or,
+    "!" => Op::Not,
     ">" => Op::GreaterThan,
     "<" => Op::LessThan,
+    "==" => Op::IsEq,
 }
 
-Assign: Op = {
+AssignOp: Op = {
     "=" => Op::Equal,
     "+=" => Op::AddEq,
     "-=" => Op::SubEq,
@@ -74,12 +52,40 @@ Assign: Op = {
 Type: Type = {
     "i32" => Type::I32,
     "bool" => Type::Bool,
+    "String" => Type::String,
+}
+
+ExprOp: Op = { 
+    "+" => Op::Add,
+    "-" => Op::Sub,
+}
+
+FactorOp: Op = {
+    "*" => Op::Mul,
+    "/" => Op::Div,
+}
+
+Term: Box<Expr> = {
+    Num => Box::new(Expr::Number(<>)),
+    Id => Box::new(Expr::Var(<>)),
+    Logic => Box::new(Expr::Logic(<>)),
+    "(" <Expr> ")"
+}
+
+Num: i32 = {
+    <n:r"[-]?[0-9]+"> => i32::from_str(n).unwrap(),
 }
 
 Id: String = {
     r"[a-zA-Z_][a-zA-Z0-9_]*" => <>.to_string()
 }
 
+Logic: bool = {
+    "true" => true,
+    "false" => false,
+}
+
+// http://lalrpop.github.io/lalrpop/tutorial/007_macros.html
 Comma<T>:Vec<T> = {
     <v:(<T> ",")*> <e:T?> => match e {
         None => v,
@@ -90,12 +96,3 @@ Comma<T>:Vec<T> = {
         }
     }
 }
-
-
-//match {
-//    r"[-]?[0-9]+"
-//} else {
-//    r"(?i)fn\s" => FUNCTION,
-//    r"[\w_][\w_\d]*" => IDENTIFIER,
-//    _
-//}

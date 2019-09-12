@@ -7,31 +7,41 @@ pub enum Type {
     String,
 }
 
-
 #[derive(Debug)]
 pub enum Expr {
     Number(i32),
     Var(String),
     Op(Box<Expr>, Op, Box<Expr>),
+    Logic(bool),
     Error,
 }
 
 pub enum Op {
+//BinOp
     Mul,
     Div,
     Add,
     Sub,
 
+//AssignOp
     Equal,
     AddEq,
     SubEq,
     DivEq,
     MulEq,
 
+//LogOp
+    And,
+    Or,
+    Not,
+
+//RelOp
+    IsEq,
     GreaterThan,
     LessThan,
-
 }
+
+
 #[derive(Debug)]
 pub enum Statement { 
     Let(String, Type, Op, Box<Expr>),
@@ -60,22 +70,24 @@ pub struct Params {
 impl Debug for Op {
     fn fmt(&self, fmt: &mut Formatter) -> Result<(), Error> {
         use self::Op::*;
+
         match *self {
             Mul => write!(fmt, "*"),
             Div => write!(fmt, "/"),
             Add => write!(fmt, "+"),
             Sub => write!(fmt, "-"),
-
             Equal => write!(fmt, "="),
             AddEq => write!(fmt, "+="),
             SubEq => write!(fmt, "-="),
             DivEq => write!(fmt, "/="),
             MulEq => write!(fmt, "*="),
-
+            And => write!(fmt, "&&"),
+            Or => write!(fmt, "||"),
+            Not => write!(fmt, "!"),
+            IsEq => write!(fmt, "=="),
             GreaterThan => write!(fmt, ">"),
-            LessThan => write!(fmt, "<"),
+            LessThan => write!(fmt, "<"),    
 
-    
         }
     }
 }
