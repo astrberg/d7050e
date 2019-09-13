@@ -1,7 +1,8 @@
 use std::str::FromStr;
 use crate::ast::*;
+use lalrpop_util::ErrorRecovery;
 
-grammar;
+grammar<'err>(errors: &'err mut Vec<ErrorRecovery<usize, Token<'input>, &'static str>>);
 
 pub Program = <FunctionDec*>;
 
@@ -22,7 +23,6 @@ Statement: Box<Statement> = {
     "return" <expr:Expr> ";" => Box::new(Statement::Return(expr)),
 
 }
-
 Cond = Tier<CondOp, Expr>;
 Expr = Tier<ExprOp, Factor>;
 Factor = Tier<FactorOp, Term>;
@@ -33,12 +33,14 @@ Tier<Op,NextTier>: Box<Expr> = {
 };
 
 CondOp: Op = {
-    "&&" => Op::And,
-    "||" => Op::Or,
-    "!" => Op::Not,
     ">" => Op::GreaterThan,
     "<" => Op::LessThan,
     "==" => Op::IsEq,
+    "!=" => Op::NotEq,
+
+    "&&" => Op::And,
+    "||" => Op::Or,
+    "!" => Op::Not,
 }
 
 AssignOp: Op = {
@@ -62,9 +64,10 @@ FactorOp: Op = {
 Term: Box<Expr> = {
     Num => Box::new(Expr::Number(<>)),
     Id => Box::new(Expr::Var(<>)),
-    Logic => Box::new(Expr::Logic(<>)),
+    Bool => Box::new(Expr::Bool(<>)),
     Type => Box::new(Expr::Type(<>)),
-    "(" <Expr> ")"
+    "(" <Expr> ")",
+    ! => { errors.push(<>); Box::new(Expr::Error) },
 }
 
 Type: Type = {
@@ -81,7 +84,7 @@ Id: String = {
     r"[a-zA-Z_][a-zA-Z0-9_]*" => <>.to_string()
 }
 
-Logic: bool = {
+Bool: bool = {
     "true" => true,
     "false" => false,
 }

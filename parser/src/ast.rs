@@ -12,7 +12,7 @@ pub enum Expr {
     Number(i32),
     Var(String),
     Op(Box<Expr>, Op, Box<Expr>),
-    Logic(bool),
+    Bool(bool),
     Type(Type),
     Error,
 }
@@ -38,6 +38,7 @@ pub enum Op {
 
 //RelOp
     IsEq,
+    NotEq,
     GreaterThan,
     LessThan,
 }
@@ -50,6 +51,7 @@ pub enum Statement {
     Return(Box<Expr>),
     Else(Vec<Box<Statement>>),
     While(Box<Expr>, Vec<Box<Statement>>),
+    Function(Box<Expr>),
 
 }
 
@@ -86,6 +88,7 @@ impl Debug for Op {
             Or => write!(fmt, "||"),
             Not => write!(fmt, "!"),
             IsEq => write!(fmt, "=="),
+            NotEq => write!(fmt, "!="),
             GreaterThan => write!(fmt, ">"),
             LessThan => write!(fmt, "<"),    
 
