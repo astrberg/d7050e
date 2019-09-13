@@ -6,7 +6,7 @@ grammar;
 pub Program = <FunctionDec*>;
 
 FunctionDec: Box<FunctionDec> = {
-    "fn" <name:Id> "(" <params:Comma<Params>> ")" "->" <return_type:Type> "{" <body:Statement*> "}" => Box::new(FunctionDec{name, params, return_type, body}),
+    "fn" <name:Id> "(" <params:Comma<Params>> ")" "->" <return_type:Expr> "{" <body:Statement*> "}" => Box::new(FunctionDec{name, params, return_type, body}),
 
 }
 
@@ -15,7 +15,7 @@ Params: Params = {
 }
 
 Statement: Box<Statement> = {
-    "let" <name:Id> ":" <data_type:Type> <op:AssignOp> <expr:Expr> ";" => Box::new(Statement::Let(<>)),
+    "let" <name:Expr> ":" <data_type:Expr> <op:AssignOp> <expr:Expr> ";" => Box::new(Statement::Let(<>)),
     "if" <cond:Cond> "{" <body:Statement*> "}" => Box::new(Statement::If(<>)),
     "else" "{" <body:Statement*> "}" => Box::new(Statement::Else(<>)),
     "while" <cond:Cond> "{" <body:Statement*> "}" => Box::new(Statement::While(<>)),
@@ -49,12 +49,6 @@ AssignOp: Op = {
     "*=" => Op::MulEq,
 }
 
-Type: Type = {
-    "i32" => Type::I32,
-    "bool" => Type::Bool,
-    "String" => Type::String,
-}
-
 ExprOp: Op = { 
     "+" => Op::Add,
     "-" => Op::Sub,
@@ -69,7 +63,14 @@ Term: Box<Expr> = {
     Num => Box::new(Expr::Number(<>)),
     Id => Box::new(Expr::Var(<>)),
     Logic => Box::new(Expr::Logic(<>)),
+    Type => Box::new(Expr::Type(<>)),
     "(" <Expr> ")"
+}
+
+Type: Type = {
+    "i32" => Type::I32,
+    "bool" => Type::Bool,
+    "String" => Type::String,
 }
 
 Num: i32 = {

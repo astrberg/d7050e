@@ -13,6 +13,7 @@ pub enum Expr {
     Var(String),
     Op(Box<Expr>, Op, Box<Expr>),
     Logic(bool),
+    Type(Type),
     Error,
 }
 
@@ -44,7 +45,7 @@ pub enum Op {
 
 #[derive(Debug)]
 pub enum Statement { 
-    Let(String, Type, Op, Box<Expr>),
+    Let(Box<Expr>, Box<Expr>, Op, Box<Expr>),
     If(Box<Expr>, Vec<Box<Statement>>),
     Return(Box<Expr>),
     Else(Vec<Box<Statement>>),
@@ -56,7 +57,7 @@ pub enum Statement {
 pub struct FunctionDec {
     pub name: String,
     pub params: Vec<Params>,
-    pub return_type: Type,
+    pub return_type: Box<Expr>,
     pub body: Vec<Box<Statement>>,
 }
 

@@ -70,8 +70,11 @@ fn main() {
     //         .unwrap();
     // println!("{:#?}", stmt);
 
-    // let stmt = parser::StatementParser::new()
-    //         .parse("return 20*10;")
+    // let stmt = parser::ProgramParser::new()
+    //         .parse("fn test() -> i32 {
+    //             let a : i32 = 5 + 3 * 2 + 1;
+    //             return a;
+    //             }")
     //         .unwrap();
     // println!("{:#?}", stmt);
 
