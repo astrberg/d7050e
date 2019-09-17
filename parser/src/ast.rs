@@ -11,6 +11,7 @@ pub enum Type {
 pub enum Expr {
     Number(i32),
     Var(String),
+    Function(String, Vec<Box<Expr>>),
     Op(Box<Expr>, Op, Box<Expr>),
     Bool(bool),
     Type(Type),
@@ -51,7 +52,7 @@ pub enum Statement {
     Return(Box<Expr>),
     Else(Vec<Box<Statement>>),
     While(Box<Expr>, Vec<Box<Statement>>),
-    Function(Box<Expr>),
+
 
 }
 

@@ -20,10 +20,11 @@ Statement: Box<Statement> = {
     "if" <cond:Cond> "{" <body:Statement*> "}" => Box::new(Statement::If(<>)),
     "else" "{" <body:Statement*> "}" => Box::new(Statement::Else(<>)),
     "while" <cond:Cond> "{" <body:Statement*> "}" => Box::new(Statement::While(<>)),
-    "return" <expr:Expr> ";" => Box::new(Statement::Return(expr)),
-
+    "return" <expr:Expr> ";" => Box::new(Statement::Return(<>)),
+    <func:Function> ";" => Box::new(Statement::Function(<>)),
 }
-Cond = Tier<CondOp, Expr>;
+Cond = Tier<LogOp, CondExpr>;
+CondExpr = Tier<CondOp, Expr>;
 Expr = Tier<ExprOp, Factor>;
 Factor = Tier<FactorOp, Term>;
 
@@ -37,6 +38,9 @@ CondOp: Op = {
     "<" => Op::LessThan,
     "==" => Op::IsEq,
     "!=" => Op::NotEq,
+}
+
+LogOp: Op = {
 
     "&&" => Op::And,
     "||" => Op::Or,
@@ -66,6 +70,7 @@ Term: Box<Expr> = {
     Id => Box::new(Expr::Var(<>)),
     Bool => Box::new(Expr::Bool(<>)),
     Type => Box::new(Expr::Type(<>)),
+    Function,
     "(" <Expr> ")",
     ! => { errors.push(<>); Box::new(Expr::Error) },
 }
@@ -74,6 +79,10 @@ Type: Type = {
     "i32" => Type::I32,
     "bool" => Type::Bool,
     "String" => Type::String,
+}
+
+Function: Box<Expr> = {
+    <name:Id> "(" <expr:Comma<Expr>> ")" => Box::new(Expr::Name(<>)),
 }
 
 Num: i32 = {
