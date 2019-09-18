@@ -23,6 +23,7 @@ Statement: Box<Statement> = {
     "return" <expr:Expr> ";" => Box::new(Statement::Return(<>)),
     <func:Function> ";" => Box::new(Statement::Function(<>)),
 }
+
 Cond = Tier<LogOp, CondExpr>;
 CondExpr = Tier<CondOp, Expr>;
 Expr = Tier<ExprOp, Factor>;
@@ -41,7 +42,6 @@ CondOp: Op = {
 }
 
 LogOp: Op = {
-
     "&&" => Op::And,
     "||" => Op::Or,
     "!" => Op::Not,
@@ -82,7 +82,7 @@ Type: Type = {
 }
 
 Function: Box<Expr> = {
-    <name:Id> "(" <expr:Comma<Expr>> ")" => Box::new(Expr::Name(<>)),
+    <name:Id> "(" <expr:Comma<Expr>> ")" => Box::new(Expr::Function(<>)),
 }
 
 Num: i32 = {
