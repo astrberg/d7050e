@@ -31,7 +31,7 @@ Factor = Tier<FactorOp, Term>;
 
 Tier<Op,NextTier>: Box<Expr> = {
     Tier<Op,NextTier> Op NextTier => Box::new(Expr::Op(<>)),
-    NextTier
+    NextTier,
 };
 
 CondOp: Op = {

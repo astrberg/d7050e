@@ -57,11 +57,22 @@ fn main() {
                 a = bar(32); 
                 bar(123, a);
                 }";
+    let _input8 = "fn foo() -> String {
+                let a : bool = true;
+                let a: bool = f(false);
+        
+        }";
+    let _input9 = "fn test() -> String {
+                if (5 && 3) {
+                    return 1 - 1 - 1;
+                }
+        
+        }";
 
     let mut errors = Vec::new();
     
     let stmt = parser::ProgramParser::new()
-            .parse(&mut errors, _input7)
+            .parse(&mut errors, _input9)
             .unwrap();
     println!("{:#?}", stmt);
     println!("{:#?}", errors);
