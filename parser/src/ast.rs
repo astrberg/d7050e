@@ -49,8 +49,7 @@ pub enum Op {
 
 #[derive(Debug)]
 pub enum Statement { 
-    Let(Box<Expr>, Box<Expr>, Op, Box<Expr>),
-    Assign(Box<Expr>, Op, Box<Expr>),
+    Let(String, Type, Op, Box<Expr>),
     If(Box<Expr>, Vec<Box<Statement>>),
     Return(Box<Expr>),
     Else(Vec<Box<Statement>>),

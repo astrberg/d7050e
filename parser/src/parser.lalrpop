@@ -15,23 +15,23 @@ Params: Params = {
 }
 
 Statement: Box<Statement> = {
-    "let" <name:Expr> ":" <data_type:Expr> <op:AssignOp> <expr:Expr> ";" => Box::new(Statement::Let(<>)),
-    "if" <cond:Cond> "{" <body:Statement*> "}" => Box::new(Statement::If(<>)),
+    "let" <name:Id> ":" <data_type:Type> <assign:AssignOp> <expr:Expr> ";" => Box::new(Statement::Let(<>)),
+    "if" <cond:Log> "{" <body:Statement*> "}" => Box::new(Statement::If(<>)),
     "else" "{" <body:Statement*> "}" => Box::new(Statement::Else(<>)),
-    "while" <cond:Cond> "{" <body:Statement*> "}" => Box::new(Statement::While(<>)),
+    "while" <cond:Log> "{" <body:Statement*> "}" => Box::new(Statement::While(<>)),
     "return" <expr:Expr> ";" => Box::new(Statement::Return(<>)),
-    <AssignExpr> ";" => Box::new(Statement::Expr(<>)),
+    <Expr> ";" => Box::new(Statement::Expr(<>)),
 }
 
-Cond = Tier<LogOp, CondExpr>;
-CondExpr = Tier<CondOp, Expr>;
-AssignExpr = Tier<AssignOp, Expr>;
-Expr = Tier<ExprOp, Factor>;
+Expr = Tier<AssignOp, Log>;
+Log = Tier<LogOp, Cond>;
+Cond = Tier<CondOp, Sum>;
+Sum = Tier<SumOp, Factor>;
 Factor = Tier<FactorOp, Term>;
 
 Tier<Op,NextTier>: Box<Expr> = {
     Tier<Op,NextTier> Op NextTier => Box::new(Expr::Op(<>)),
-    NextTier,
+	NextTier
 };
 
 CondOp: Op = {
@@ -55,7 +55,7 @@ AssignOp: Op = {
     "*=" => Op::MulEq,
 }
 
-ExprOp: Op = { 
+SumOp: Op = { 
     "+" => Op::Add,
     "-" => Op::Sub,
 }

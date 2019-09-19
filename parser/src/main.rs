@@ -63,8 +63,8 @@ fn main() {
         
         }";
     let _input9 = "fn test() -> String {
-                if (5 && 3) {
-                    return 1 - 1 - 1;
+                if (5 > 3) && (2>3) {
+                    return 1 - 1 * 1;
                 }
         
         }";
@@ -72,7 +72,7 @@ fn main() {
     let mut errors = Vec::new();
     
     let stmt = parser::ProgramParser::new()
-            .parse(&mut errors, _input9)
+            .parse(&mut errors, _input4)
             .unwrap();
     println!("{:#?}", stmt);
     println!("{:#?}", errors);
