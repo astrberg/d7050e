@@ -8,7 +8,6 @@ pub Program = <FunctionDec*>;
 
 FunctionDec: Box<FunctionDec> = {
     "fn" <name:Id> "(" <params:Comma<Params>> ")" "->" <return_type:Expr> "{" <body:Statement*> "}" => Box::new(FunctionDec{name, params, return_type, body}),
-
 }
 
 Params: Params = {
@@ -21,11 +20,12 @@ Statement: Box<Statement> = {
     "else" "{" <body:Statement*> "}" => Box::new(Statement::Else(<>)),
     "while" <cond:Cond> "{" <body:Statement*> "}" => Box::new(Statement::While(<>)),
     "return" <expr:Expr> ";" => Box::new(Statement::Return(<>)),
-    <func:Function> ";" => Box::new(Statement::Function(<>)),
+    <AssignExpr> ";" => Box::new(Statement::Expr(<>)),
 }
 
 Cond = Tier<LogOp, CondExpr>;
 CondExpr = Tier<CondOp, Expr>;
+AssignExpr = Tier<AssignOp, Expr>;
 Expr = Tier<ExprOp, Factor>;
 Factor = Tier<FactorOp, Term>;
 
@@ -81,10 +81,6 @@ Type: Type = {
     "String" => Type::String,
 }
 
-Function: Box<Expr> = {
-    <name:Id> "(" <expr:Comma<Expr>> ")" => Box::new(Expr::Function(<>)),
-}
-
 Num: i32 = {
     <n:r"[-]?[0-9]+"> => i32::from_str(n).unwrap(),
 }
@@ -96,6 +92,10 @@ Id: String = {
 Bool: bool = {
     "true" => true,
     "false" => false,
+}
+
+Function: Box<Expr> = {
+    <name:Id> "(" <args:Comma<Expr>> ")" => Box::new(Expr::Function(<>)),
 }
 
 // http://lalrpop.github.io/lalrpop/tutorial/007_macros.html

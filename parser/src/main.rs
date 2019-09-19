@@ -43,15 +43,28 @@ fn main() {
             }
             }";
     let _input5 = "fn test() -> i32 {
-                if 2 > 3 {
-                    f(2);
+                if 5 > f(3) {
+                    return hej;
                 }
                 }";
+    let _input6 = "fn test() -> i32 {
+                if(true){ 
+                    let a: i32 = 2;
+                } 
+                let b: i32 = 123;
+                }";
+    let _input7 = "fn foo() -> i32 {
+                a = bar(32); 
+                bar(123, a);
+                }";
+
     let mut errors = Vec::new();
     
     let stmt = parser::ProgramParser::new()
-            .parse(&mut errors, _input5)
+            .parse(&mut errors, _input7)
             .unwrap();
     println!("{:#?}", stmt);
     println!("{:#?}", errors);
 }
+
+
