@@ -1,8 +1,8 @@
 use std::str::FromStr;
 use crate::ast::*;
-use lalrpop_util::ErrorRecovery;
 
-grammar<'err>(errors: &'err mut Vec<ErrorRecovery<usize, Token<'input>, &'static str>>);
+
+grammar;
 
 pub Program = <FunctionDec*>;
 
@@ -23,7 +23,7 @@ Statement: Box<Statement> = {
     <Expr> ";" => Box::new(Statement::Expr(<>)),
 }
 
-Expr = Tier<AssignOp, Log>;
+pub Expr = Tier<AssignOp, Log>;
 Log = Tier<LogOp, Cond>;
 Cond = Tier<CondOp, Sum>;
 Sum = Tier<SumOp, Factor>;
@@ -72,7 +72,6 @@ Term: Box<Expr> = {
     Type => Box::new(Expr::Type(<>)),
     Function,
     "(" <Expr> ")",
-    ! => { errors.push(<>); Box::new(Expr::Error) },
 }
 
 Type: Type = {

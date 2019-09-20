@@ -1,8 +1,4 @@
 [workspace]
 members = [
-    "calculator",
-    "expr_parser",
-    "first",
-    "parser",
-    "whitespace",
+    "compiler",
 ]
