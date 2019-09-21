@@ -1,13 +1,13 @@
 use std::fmt::{Debug, Error, Formatter};
 
-#[derive(Debug)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum Type {
     I32,
     Bool,
     String,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum Expr {
     Number(i32),
     Var(String),
@@ -18,47 +18,46 @@ pub enum Expr {
     Error,
 }
 
+#[derive(Clone, PartialEq)]
 pub enum Op {
-//BinOp
+    //BinOp
     Mul,
     Div,
     Add,
     Sub,
 
-//TODO: UnOp is not supported!
+    //TODO: UnOp is not supported!
 
-//AssignOp
+    //AssignOp
     Equal,
     AddEq,
     SubEq,
     DivEq,
     MulEq,
 
-//LogOp
+    //LogOp
     And,
     Or,
     Not,
 
-//RelOp
+    //RelOp
     IsEq,
     NotEq,
     GreaterThan,
     LessThan,
 }
 
-
-#[derive(Debug)]
-pub enum Statement { 
-    Let(String, Type, Op, Box<Expr>),
+#[derive(Debug, Clone, PartialEq)]
+pub enum Statement {
+    Let(Box<Expr>, Box<Expr>, Op, Box<Expr>),
     If(Box<Expr>, Vec<Box<Statement>>),
     Return(Box<Expr>),
     Else(Vec<Box<Statement>>),
     While(Box<Expr>, Vec<Box<Statement>>),
     Expr(Box<Expr>),
-
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct FunctionDec {
     pub name: String,
     pub params: Vec<Params>,
@@ -66,8 +65,7 @@ pub struct FunctionDec {
     pub body: Vec<Box<Statement>>,
 }
 
-
-#[derive(Debug)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct Params {
     pub name: String,
     pub data_type: Type,
@@ -93,8 +91,7 @@ impl Debug for Op {
             IsEq => write!(fmt, "=="),
             NotEq => write!(fmt, "!="),
             GreaterThan => write!(fmt, ">"),
-            LessThan => write!(fmt, "<"),    
-
+            LessThan => write!(fmt, "<"),
         }
     }
 }

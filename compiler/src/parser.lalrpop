@@ -14,9 +14,9 @@ Params: Params = {
     <name:Id> ":" <data_type:Type> => Params{<>}
 }
 
-Statement: Box<Statement> = {
-    "let" <name:Id> ":" <data_type:Type> <assign:AssignOp> <expr:Expr> ";" => Box::new(Statement::Let(<>)),
-    "if" <cond:Log> "{" <body:Statement*> "}" => Box::new(Statement::If(<>)),
+pub Statement: Box<Statement> = {
+    "let" <name:Expr> ":" <data_type:Expr> <assign:AssignOp> <expr:Expr> ";" => Box::new(Statement::Let(<>)),
+    "if" "(" <cond:Log> ")" "{" <body:Statement*> "}" => Box::new(Statement::If(<>)),
     "else" "{" <body:Statement*> "}" => Box::new(Statement::Else(<>)),
     "while" <cond:Log> "{" <body:Statement*> "}" => Box::new(Statement::While(<>)),
     "return" <expr:Expr> ";" => Box::new(Statement::Return(<>)),
@@ -24,7 +24,7 @@ Statement: Box<Statement> = {
 }
 
 pub Expr = Tier<AssignOp, Log>;
-Log = Tier<LogOp, Cond>;
+pub Log = Tier<LogOp, Cond>;
 Cond = Tier<CondOp, Sum>;
 Sum = Tier<SumOp, Factor>;
 Factor = Tier<FactorOp, Term>;
