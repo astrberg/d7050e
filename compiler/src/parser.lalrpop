@@ -8,6 +8,7 @@ pub Program = <FunctionDec*>;
 
 FunctionDec: Box<FunctionDec> = {
     "fn" <name:Id> "(" <params:Comma<Params>> ")" "->" <return_type:Expr> "{" <body:Statement*> "}" => Box::new(FunctionDec{name, params, return_type, body}),
+    "fn" <name:Id> "(" <params:Comma<Params>> ")" "{" <body:Statement*> "}" => Box::new(FunctionDec{name, params, return_type:Box::new(Expr::Type(Type::None)), body}),
 }
 
 Params: Params = {
@@ -15,9 +16,8 @@ Params: Params = {
 }
 
 pub Statement: Box<Statement> = {
-    "let" <name:Expr> ":" <data_type:Expr> <assign:AssignOp> <expr:Expr> ";" => Box::new(Statement::Let(<>)),
-    "if" "(" <cond:Log> ")" "{" <body:Statement*> "}" => Box::new(Statement::If(<>)),
-    "else" "{" <body:Statement*> "}" => Box::new(Statement::Else(<>)),
+    "let" <name:Term> ":" <data_type:Term> <assign:AssignOp> <expr:Expr> ";" => Box::new(Statement::Let(<>)),
+    "if" <cond:Log> "{" <body:Statement*> "}" => Box::new(Statement::If(<>)),
     "while" <cond:Log> "{" <body:Statement*> "}" => Box::new(Statement::While(<>)),
     "return" <expr:Expr> ";" => Box::new(Statement::Return(<>)),
     <Expr> ";" => Box::new(Statement::Expr(<>)),
@@ -78,6 +78,7 @@ Type: Type = {
     "i32" => Type::I32,
     "bool" => Type::Bool,
     "String" => Type::String,
+    "Result" => Type::Result,
 }
 
 Num: i32 = {

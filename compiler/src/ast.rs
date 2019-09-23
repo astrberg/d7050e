@@ -5,6 +5,8 @@ pub enum Type {
     I32,
     Bool,
     String,
+    Result,
+    None,
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -52,7 +54,6 @@ pub enum Statement {
     Let(Box<Expr>, Box<Expr>, Op, Box<Expr>),
     If(Box<Expr>, Vec<Box<Statement>>),
     Return(Box<Expr>),
-    Else(Vec<Box<Statement>>),
     While(Box<Expr>, Vec<Box<Statement>>),
     Expr(Box<Expr>),
 }
