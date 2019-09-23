@@ -3,11 +3,16 @@ extern crate lalrpop_util;
 
 lalrpop_mod!(pub parser);
 
-pub mod ast;
+mod ast;
+mod interpreter;
+
 
 fn main() {
-    let input = parser::ExprParser::new().parse("1 += 2").unwrap();
-    println!("{:#?}", input);
+    let stmt = parser::StatementParser::new().parse("let a : i32 = 2;").unwrap();
+    println!("{:#?}", stmt);
+    
+    let stmt = interpreter::statement(&stmt);
+    println!("{:#?}", stmt);
 
 
 

@@ -1,6 +1,6 @@
 use std::fmt::{Debug, Error, Formatter};
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Copy, Hash, Eq, Debug, Clone, PartialEq)]
 pub enum Type {
     I32,
     Bool,
@@ -9,7 +9,7 @@ pub enum Type {
     None,
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Hash, Eq, Debug, Clone, PartialEq)]
 pub enum Expr {
     Number(i32),
     Var(String),
@@ -20,7 +20,7 @@ pub enum Expr {
     Error,
 }
 
-#[derive(Clone, PartialEq)]
+#[derive(Copy, Hash, Eq, Clone, PartialEq)]
 pub enum Op {
     //BinOp
     Mul,
@@ -49,7 +49,7 @@ pub enum Op {
     LessThan,
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Hash, Eq, Debug, Clone, PartialEq)]
 pub enum Statement {
     Let(Box<Expr>, Box<Expr>, Op, Box<Expr>),
     If(Box<Expr>, Vec<Box<Statement>>),
