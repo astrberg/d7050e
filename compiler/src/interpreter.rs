@@ -1,32 +1,22 @@
 use std::collections::HashMap;
 use crate::ast::*;
 
-#[derive(Clone, Hash, Eq, PartialEq, Debug)]
 pub enum Value {
     Int(i32),
     Text(String),
-    Boolean(String, bool),
 }
 
-
-// impl Instruction {
-//     fn new(key: Expr) -> Instruction {
-//         Instruction {
-//             key : key
-//         }
-//     }
-// }
 
 fn unbox<T>(value: Box<T>) -> T {
     *value
 }
 
-pub fn statement(s: &Statement) -> Option<HashMap<String, Value>> {
-    let mut instructions: HashMap<String, Value> = HashMap::new(); 
+pub fn statement(s: &Statement) -> &HashMap<String, Value> {
+    let mut instructions = HashMap::new(); 
     match s {
         Statement::Let(var, _typ, op, expr) => {
             match op {
-                Op::Equal => instructions.insert(String::from(unbox(var.clone())), Value::Integer(bin_expr(&expr))),
+                Op::Equal => instructions.insert(unbox(var).to_string(), Expr::Number(bin_expr(&expr))),
                 // Op::AddEq
                 _ => panic!(),
     
