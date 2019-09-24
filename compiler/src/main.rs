@@ -8,7 +8,14 @@ mod interpreter;
 
 
 fn main() {
-    let stmt = parser::StatementParser::new().parse("let a : i32 = 2;").unwrap();
+    
+    // let expr = parser::ExprParser::new().parse("a + 3").unwrap();
+    // println!("{:#?}", expr);
+
+    // let interp = interpreter::bin_expr(&expr);
+    // println!("{:?}", interp);
+
+    let stmt = parser::StatementParser::new().parse("let a : i32 = 2 + 3 * 2;").unwrap();
     println!("{:#?}", stmt);
     
     let stmt = interpreter::statement(&stmt);

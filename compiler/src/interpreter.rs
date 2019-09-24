@@ -1,38 +1,42 @@
 use std::collections::HashMap;
 use crate::ast::*;
 
-#[derive(Hash, Eq, PartialEq, Debug)]
-pub struct Instruction {
-    key: Expr,
+#[derive(Clone, Hash, Eq, PartialEq, Debug)]
+pub enum Value {
+    Int(i32),
+    Text(String),
+    Boolean(String, bool),
 }
 
-impl Instruction {
-    fn new(key: Expr) -> Instruction {
-        Instruction {
-            key : key
-        }
-    }
-}
+
+// impl Instruction {
+//     fn new(key: Expr) -> Instruction {
+//         Instruction {
+//             key : key
+//         }
+//     }
+// }
 
 fn unbox<T>(value: Box<T>) -> T {
     *value
 }
 
-pub fn statement(s: &Statement) -> HashMap<Instruction, i32> {
-    let mut instructions = HashMap::new(); 
+pub fn statement(s: &Statement) -> Option<HashMap<String, Value>> {
+    let mut instructions: HashMap<String, Value> = HashMap::new(); 
     match s {
         Statement::Let(var, _typ, op, expr) => {
             match op {
-                Op::Equal => instructions.insert(Instruction::new(unbox(var.clone())), bin_expr(&expr)),
+                Op::Equal => instructions.insert(String::from(unbox(var.clone())), Value::Integer(bin_expr(&expr))),
                 // Op::AddEq
-                _ => instructions
+                _ => panic!(),
     
             }
+        // Statement::If(cond, body) => {}
 
         }
     _ => panic!(),
     }
-    instructions
+    
 }
 
 pub fn bin_expr(e: &Expr) -> i32 {
