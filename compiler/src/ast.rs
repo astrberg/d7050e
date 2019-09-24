@@ -76,6 +76,7 @@ impl Expr {
     pub fn into(self) -> String {
         match self {
             Expr::Var(s) => s.to_string(),
+            _ => panic!("none"),
         }
     }
 }

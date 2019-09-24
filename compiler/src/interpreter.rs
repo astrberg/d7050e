@@ -17,21 +17,22 @@ pub fn statement(s: &Statement) -> HashMap<String, Value> {
     match s {
         
         Statement::Let(var, _typ, op, expr) => {
-            let var = 
+            let var = unbox(var.clone()).into();
             match op {
                 Op::Equal => {
-                    instructions.insert(var.into(), Value::Int(bin_expr(&expr)));
+                    instructions.insert(var, Value::Int(bin_expr(&expr)));
                 },
                     
                 // Op::AddEq
-                _ => panic!(),
+                _ => panic!()
     
             }
         // Statement::If(cond, body) => {}
 
         }
-    _ => panic!(),
+        _ => panic!()
     }
+    instructions
     
 }
 
