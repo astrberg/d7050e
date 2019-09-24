@@ -72,6 +72,14 @@ pub struct Params {
     pub data_type: Type,
 }
 
+impl Expr {
+    pub fn into(self) -> String {
+        match self {
+            Expr::Var(s) => s.to_string(),
+        }
+    }
+}
+
 impl Debug for Op {
     fn fmt(&self, fmt: &mut Formatter) -> Result<(), Error> {
         use self::Op::*;

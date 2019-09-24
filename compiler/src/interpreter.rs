@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 use crate::ast::*;
 
+#[derive(Debug, Clone)]
 pub enum Value {
     Int(i32),
     Text(String),
@@ -11,12 +12,17 @@ fn unbox<T>(value: Box<T>) -> T {
     *value
 }
 
-pub fn statement(s: &Statement) -> &HashMap<String, Value> {
+pub fn statement(s: &Statement) -> HashMap<String, Value> {
     let mut instructions = HashMap::new(); 
     match s {
+        
         Statement::Let(var, _typ, op, expr) => {
+            let var = 
             match op {
-                Op::Equal => instructions.insert(unbox(var).to_string(), Expr::Number(bin_expr(&expr))),
+                Op::Equal => {
+                    instructions.insert(var.into(), Value::Int(bin_expr(&expr)));
+                },
+                    
                 // Op::AddEq
                 _ => panic!(),
     
