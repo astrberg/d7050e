@@ -12,15 +12,32 @@ fn unbox<T>(value: Box<T>) -> T {
     *value
 }
 
-pub fn statement(s: &Statement) -> HashMap<String, Value> {
+pub fn interpret(mut f: Vec<Box<FunctionDec>>) {
+    
     let mut instructions = HashMap::new(); 
-    match s {
+    
+    for i in f.drain(..) {
+        let func = *i;
+        match func {
+            FunctionDec {body, ..} => {
+                for i in body {
+                    let s = statement(i, &instructions);
+                    println!("{:?}", s);
+                }
+            }
+        };
+    }
+   
+}
+
+pub fn statement(s: Box<Statement>, instructions: &HashMap<String, Value>) {
+    match *s {
         
         Statement::Let(var, _typ, op, exp) => {
             let var = unbox(var.clone()).into();
             match op {
                 Op::Equal => {
-                    instructions.insert(var, Value::Int(expr(&exp, instructions)));
+                    instructions.insert(var, Value::Int(expr(&exp, &instructions)));
                 },
                     
                 // Op::AddEq
@@ -32,11 +49,10 @@ pub fn statement(s: &Statement) -> HashMap<String, Value> {
         }
         _ => panic!()
     }
-    instructions
     
 }
 
-pub fn expr(e: &Expr, instructions: HashMap<String, Value>) -> i32 {
+pub fn expr(e: &Expr, instructions: &HashMap<String, Value>) -> i32 {
     match e {
         Expr::Var(i) => match instructions.get(&*i) {
             Some(Value::Int(v)) => *v,

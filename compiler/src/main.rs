@@ -15,11 +15,15 @@ fn main() {
     // let interp = interpreter::bin_expr(&expr);
     // println!("{:?}", interp);
 
-    let stmt = parser::StatementParser::new().parse("let a : i32 = 2 + 3 * 2;").unwrap();
-    println!("{:#?}", stmt);
+    let f = parser::ProgramParser::new().parse("fn main() {
+        
+        let a : i32 = 2; 
+        let b : i32 = a + 3;
+        
+        }").unwrap();
+    println!("{:#?}", f);
     
-    let stmt = interpreter::statement(&stmt);
-    println!("{:#?}", stmt);
+    let interp = interpreter::interpret(f);
 
 
 
