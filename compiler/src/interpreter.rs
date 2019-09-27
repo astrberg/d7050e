@@ -73,6 +73,12 @@ pub fn eval_value(e: &Expr, i: &HashMap<String, Value>) -> Value {
 
 fn bool_expr(e: &Expr, instr: &HashMap<String, Value>) -> bool {
     match e {
+        Expr::Var(i) => match instr.get(&*i) {
+            Some(Value::Bool(v)) => *v,
+            _ => panic!("Unexpected type, expected bool")
+        }
+        Expr::Bool(b) => *b,
+        Expr::Op(l,
 
     }
 }
@@ -82,7 +88,7 @@ fn bin_expr(e: &Expr, instr: &HashMap<String, Value>) -> i32 {
     match e {
         Expr::Var(i) => match instr.get(&*i) {
             Some(Value::Int(v)) => *v,
-            _ => panic!("Unexpected type"),
+            _ => panic!("Unexpected type, expected int"),
         }
         Expr::Number(i) => *i,
         Expr::Op(l, op, r) => {
