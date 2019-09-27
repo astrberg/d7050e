@@ -37,7 +37,7 @@ pub fn statement(s: Box<Statement>, instructions: &mut HashMap<String, Value>) {
             let var = unbox(var.clone()).into();
             match op {
                 Op::Equal => {
-                    instructions.insert(var, Value::Int(bin_expr(&exp, &instructions)));
+                    instructions.insert(var, eval_value(&exp, &instructions));
                 },
                 _ => panic!()
     
@@ -63,23 +63,31 @@ pub fn statement(s: Box<Statement>, instructions: &mut HashMap<String, Value>) {
     }
 }
 
-pub fn eval_value(e: &Expr, i: &HashMap<String, Value>) {
+pub fn eval_value(e: &Expr, i: &HashMap<String, Value>) -> Value {
     match e {
-        
+        Expr::Number(_) => Value::Int(bin_expr(&e, &i)),
+        Expr::Bool(_) => Value::Bool(bool_expr(&e, &i)),
+        _ => panic!()
+    }
+}
+
+fn bool_expr(e: &Expr, instr: &HashMap<String, Value>) -> bool {
+    match e {
+
     }
 }
 
 
-pub fn bin_expr(e: &Expr, instructions: &HashMap<String, Value>) -> i32 {
+fn bin_expr(e: &Expr, instr: &HashMap<String, Value>) -> i32 {
     match e {
-        Expr::Var(i) => match instructions.get(&*i) {
+        Expr::Var(i) => match instr.get(&*i) {
             Some(Value::Int(v)) => *v,
-            _ => panic!(),
+            _ => panic!("Unexpected type"),
         }
         Expr::Number(i) => *i,
         Expr::Op(l, op, r) => {
-            let l = bin_expr(&l,instructions);
-            let r = bin_expr(&r,instructions);
+            let l = bin_expr(&l,instr);
+            let r = bin_expr(&r,instr);
             match op {
                 Op::Add => l + r, 
                 Op::Sub => l - r,
