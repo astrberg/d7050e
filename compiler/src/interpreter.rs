@@ -30,27 +30,38 @@ pub fn interpret(mut f: Vec<Box<FunctionDec>>) {
    
 }
 
-pub fn statement(s: Box<Statement>, instructions: &mut HashMap<String, Value>) {
+pub fn statement(s: Box<Statement>, instr: &mut HashMap<String, Value>) {
     match *s {
         
         Statement::Let(var, _typ, op, exp) => {
             let var = unbox(var.clone()).into();
             match op {
                 Op::Equal => {
-                    instructions.insert(var, eval_value(&exp, &instructions));
+                    instr.insert(var, eval_value(&exp, &instr));
                 },
                 _ => panic!()
     
             }
-        // Statement::If(cond, body) => {}
 
         },
+        Statement::If(cond, stmt) => {
+            match *cond {
+                Expr::Op(l, op, r) => {
+                    match op {
+                        Op::LessThan => 
+                        Op::GreaterThan =>
+                        Op::IsEq =>
+                        Op::NotEq =>
+                    }
+                }
+            }
+        }
         Statement::Expr(exp) => {
             match *exp {
                 Expr::Op(l, op, r) => {
                     match op {
                         Op::Equal => {
-                            instructions.insert(unbox(l.clone()).into(), Value::Int(bin_expr(&r, &instructions)));
+                            instr.insert(unbox(l.clone()).into(), eval_value(&r, &instr));
                         },
                     _ => panic!()
                     }
@@ -63,10 +74,18 @@ pub fn statement(s: Box<Statement>, instructions: &mut HashMap<String, Value>) {
     }
 }
 
-pub fn eval_value(e: &Expr, i: &HashMap<String, Value>) -> Value {
+pub fn eval_value(e: &Expr, instr: &HashMap<String, Value>) -> Value {
     match e {
-        Expr::Number(_) => Value::Int(bin_expr(&e, &i)),
-        Expr::Bool(_) => Value::Bool(bool_expr(&e, &i)),
+        Expr::Number(_) => Value::Int(bin_expr(&e, &instr)),
+        Expr::Bool(_) => Value::Bool(bool_expr(&e, &instr)),
+        _ => panic!()
+    }
+}
+
+fn get_value(var: &str, instr: &HashMap<String, Value>) {
+    match instr.get(&*var) {
+        Some(Value::Bool(v)) => *v,
+        Some(Value::Int(v)) => *v,
         _ => panic!()
     }
 }
@@ -78,8 +97,7 @@ fn bool_expr(e: &Expr, instr: &HashMap<String, Value>) -> bool {
             _ => panic!("Unexpected type, expected bool")
         }
         Expr::Bool(b) => *b,
-        Expr::Op(l,
-
+        _ => panic!()
     }
 }
 

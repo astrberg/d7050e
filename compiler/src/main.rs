@@ -17,13 +17,14 @@ fn main() {
 
     let f = parser::ProgramParser::new().parse("fn main() {
         
-        let a : i32 = 2;
-        b = a + 2 + a;
+        if b > 2 {
+            return 1;
+        }
 
         }").unwrap();
     println!("{:#?}", f);
     
-    let interp = interpreter::interpret(f);
+    // let interp = interpreter::interpret(f);
 
 
 
