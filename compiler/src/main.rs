@@ -17,9 +17,9 @@ fn main() {
 
     let f = parser::ProgramParser::new().parse("fn main() {
         
-        let a : i32 = 2; 
-        let b : i32 = a + 3;
-        
+        let a : i32 = 2;
+        b = a + 2 + a;
+
         }").unwrap();
     println!("{:#?}", f);
     

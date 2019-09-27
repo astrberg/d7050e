@@ -4,7 +4,7 @@ use crate::ast::*;
 #[derive(Debug, Clone)]
 pub enum Value {
     Int(i32),
-    Text(String),
+    Bool(bool),
 }
 
 
@@ -20,39 +20,57 @@ pub fn interpret(mut f: Vec<Box<FunctionDec>>) {
         let func = *i;
         match func {
             FunctionDec {body, ..} => {
-                for i in body {
-                    let s = statement(i, &instructions);
-                    println!("{:?}", s);
+                for stmt in body {
+                    statement(stmt, &mut instructions);
                 }
             }
         };
     }
+    println!("{:?}", instructions);
    
 }
 
-pub fn statement(s: Box<Statement>, instructions: &HashMap<String, Value>) {
+pub fn statement(s: Box<Statement>, instructions: &mut HashMap<String, Value>) {
     match *s {
         
         Statement::Let(var, _typ, op, exp) => {
             let var = unbox(var.clone()).into();
             match op {
                 Op::Equal => {
-                    instructions.insert(var, Value::Int(expr(&exp, &instructions)));
+                    instructions.insert(var, Value::Int(bin_expr(&exp, &instructions)));
                 },
-                    
-                // Op::AddEq
                 _ => panic!()
     
             }
         // Statement::If(cond, body) => {}
 
+        },
+        Statement::Expr(exp) => {
+            match *exp {
+                Expr::Op(l, op, r) => {
+                    match op {
+                        Op::Equal => {
+                            instructions.insert(unbox(l.clone()).into(), Value::Int(bin_expr(&r, &instructions)));
+                        },
+                    _ => panic!()
+                    }
+                }
+            _ => panic!()
+            }
         }
         _ => panic!()
-    }
     
+    }
 }
 
-pub fn expr(e: &Expr, instructions: &HashMap<String, Value>) -> i32 {
+pub fn eval_value(e: &Expr, i: &HashMap<String, Value>) {
+    match e {
+        
+    }
+}
+
+
+pub fn bin_expr(e: &Expr, instructions: &HashMap<String, Value>) -> i32 {
     match e {
         Expr::Var(i) => match instructions.get(&*i) {
             Some(Value::Int(v)) => *v,
@@ -60,8 +78,8 @@ pub fn expr(e: &Expr, instructions: &HashMap<String, Value>) -> i32 {
         }
         Expr::Number(i) => *i,
         Expr::Op(l, op, r) => {
-            let l = expr(&l,instructions);
-            let r = expr(&r,instructions);
+            let l = bin_expr(&l,instructions);
+            let r = bin_expr(&r,instructions);
             match op {
                 Op::Add => l + r, 
                 Op::Sub => l - r,
