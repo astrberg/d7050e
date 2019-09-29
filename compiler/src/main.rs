@@ -10,7 +10,9 @@ mod interpreter;
 fn main() {
     
 /*     let expr = parser::ProgramParser::new().parse("fn main() {
-            a = true + 5;
+            if a > b {
+                
+            }
       
     }").unwrap();
     println!("{:#?}", expr); */
@@ -20,15 +22,14 @@ fn main() {
 
     let f = parser::ProgramParser::new().parse("fn main() {
         
-        if true {
-            let a : i32 = 2;
-            b = a + 1;
+        if 2 > 1 && 3 < 2 {
+            a = 1;
         }
 
         }").unwrap();
     //println!("{:#?}", f);
     
-    interpreter::interpret(f);
+   interpreter::interpret(f);
 
 
 

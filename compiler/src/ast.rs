@@ -1,6 +1,6 @@
 use std::fmt::{Debug, Error, Formatter};
 
-#[derive(Copy, Hash, Eq, Debug, Clone, PartialEq)]
+#[derive(Copy, Hash, Eq, Debug, Clone, PartialEq, PartialOrd)]
 pub enum Type {
     I32,
     Bool,
@@ -9,7 +9,7 @@ pub enum Type {
     None,
 }
 
-#[derive(Hash, Eq, Debug, Clone, PartialEq)]
+#[derive(Hash, Eq, Debug, Clone, PartialEq, PartialOrd)]
 pub enum Expr {
     Number(i32),
     Var(String),
@@ -20,7 +20,7 @@ pub enum Expr {
     Error,
 }
 
-#[derive(Copy, Hash, Eq, Clone, PartialEq)]
+#[derive(Copy, Hash, Eq, Clone, PartialEq, PartialOrd)]
 pub enum Op {
     //BinOp
     Mul,

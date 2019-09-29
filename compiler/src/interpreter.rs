@@ -47,21 +47,19 @@ pub fn statement(s: Box<Statement>, instr: &mut HashMap<String, Value>) {
             match *cond {
                 Expr::Bool(b) => {
                     if b {
-                        for i in *stmt.drain(..) {
-                             statement(i, instr);
-                        }
-                       
-
+                        drain_block(stmt, instr);
+                             
                     }
+                    
                 },
-/*                 Expr::Op(l, op, r) => {
+                Expr::Op(l, op, r) => {
                     match op {
-                        Op::LessThan => 
-                        Op::GreaterThan =>
-                        Op::IsEq =>
-                        Op::NotEq =>
+                        Op::And =>
+                        Op::Or =>
+                        Op::Not =>
+                        _ => if eval_if(&l, &op, &r) { drain_block(stmt, instr); }
                     }
-                } */
+                }
                 _ => panic!()
             }
         }
@@ -80,6 +78,22 @@ pub fn statement(s: Box<Statement>, instr: &mut HashMap<String, Value>) {
         }
         _ => panic!()
     
+    }
+}
+
+fn drain_block(mut stmt: Vec<Box<Statement>>, instr: &mut HashMap<String, Value>) {
+    for i in stmt.drain(..) {
+        statement(i, instr);
+    }
+}
+
+fn eval_if(l: &Expr, op: &Op, r: &Expr) -> bool {
+    match op {
+        Op::IsEq => l == r,
+        Op::GreaterThan => l > r,
+        Op::LessThan => l < r,
+        Op::NotEq => l != r,
+        _ => panic!("Not a valid conditional!")
     }
 }
 
