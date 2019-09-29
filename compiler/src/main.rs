@@ -9,22 +9,26 @@ mod interpreter;
 
 fn main() {
     
-    // let expr = parser::ExprParser::new().parse("a + 3").unwrap();
-    // println!("{:#?}", expr);
+/*     let expr = parser::ProgramParser::new().parse("fn main() {
+            a = true + 5;
+      
+    }").unwrap();
+    println!("{:#?}", expr); */
 
     // let interp = interpreter::bin_expr(&expr);
     // println!("{:?}", interp);
 
     let f = parser::ProgramParser::new().parse("fn main() {
         
-        if b > 2 {
-            return 1;
+        if true {
+            let a : i32 = 2;
+            b = a + 1;
         }
 
         }").unwrap();
-    println!("{:#?}", f);
+    //println!("{:#?}", f);
     
-    // let interp = interpreter::interpret(f);
+    interpreter::interpret(f);
 
 
 

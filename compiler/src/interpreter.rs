@@ -26,7 +26,7 @@ pub fn interpret(mut f: Vec<Box<FunctionDec>>) {
             }
         };
     }
-    println!("{:?}", instructions);
+    println!("{:#?}", instructions);
    
 }
 
@@ -34,10 +34,9 @@ pub fn statement(s: Box<Statement>, instr: &mut HashMap<String, Value>) {
     match *s {
         
         Statement::Let(var, _typ, op, exp) => {
-            let var = unbox(var.clone()).into();
             match op {
                 Op::Equal => {
-                    instr.insert(var, eval_value(&exp, &instr));
+                    instr.insert(unbox(var.clone()).into(), eval_expr(&exp, &instr));
                 },
                 _ => panic!()
     
@@ -46,14 +45,24 @@ pub fn statement(s: Box<Statement>, instr: &mut HashMap<String, Value>) {
         },
         Statement::If(cond, stmt) => {
             match *cond {
-                Expr::Op(l, op, r) => {
+                Expr::Bool(b) => {
+                    if b {
+                        for i in *stmt.drain(..) {
+                             statement(i, instr);
+                        }
+                       
+
+                    }
+                },
+/*                 Expr::Op(l, op, r) => {
                     match op {
                         Op::LessThan => 
                         Op::GreaterThan =>
                         Op::IsEq =>
                         Op::NotEq =>
                     }
-                }
+                } */
+                _ => panic!()
             }
         }
         Statement::Expr(exp) => {
@@ -61,7 +70,7 @@ pub fn statement(s: Box<Statement>, instr: &mut HashMap<String, Value>) {
                 Expr::Op(l, op, r) => {
                     match op {
                         Op::Equal => {
-                            instr.insert(unbox(l.clone()).into(), eval_value(&r, &instr));
+                            instr.insert(unbox(l.clone()).into(), eval_expr(&r, &instr));
                         },
                     _ => panic!()
                     }
@@ -74,21 +83,21 @@ pub fn statement(s: Box<Statement>, instr: &mut HashMap<String, Value>) {
     }
 }
 
-pub fn eval_value(e: &Expr, instr: &HashMap<String, Value>) -> Value {
-    match e {
-        Expr::Number(_) => Value::Int(bin_expr(&e, &instr)),
-        Expr::Bool(_) => Value::Bool(bool_expr(&e, &instr)),
-        _ => panic!()
-    }
-}
+pub fn eval_expr(e: &Expr, instr: &HashMap<String, Value>) -> Value {
 
-fn get_value(var: &str, instr: &HashMap<String, Value>) {
-    match instr.get(&*var) {
-        Some(Value::Bool(v)) => *v,
-        Some(Value::Int(v)) => *v,
-        _ => panic!()
-    }
+    match e {
+        Expr::Bool(_) => Value::Bool(bool_expr(&e, &instr)),
+        Expr::Number(_) => Value::Int(bin_expr(&e, &instr)),
+        Expr::Op(l, _, r) => Value::Int(bin_expr(&e, &instr)),
+        _ => panic!("That binary operation is not allowed!"),
+    } 
+  
+        
 }
+   
+    
+
+
 
 fn bool_expr(e: &Expr, instr: &HashMap<String, Value>) -> bool {
     match e {
