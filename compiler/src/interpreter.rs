@@ -43,7 +43,7 @@ pub fn statement(s: Box<Statement>, instr: &mut HashMap<String, Value>) {
             }
 
         },
-        Statement::If(cond, stmt) => { if eval_if(&cond) { drain_block(stmt, instr)}; },
+        Statement::If(cond, stmt) => { if eval_cond(&cond) { drain_block(stmt, instr)}; },
         Statement::Expr(exp) => {
             match *exp {
                 Expr::Op(l, op, r) => {
@@ -62,27 +62,6 @@ pub fn statement(s: Box<Statement>, instr: &mut HashMap<String, Value>) {
     }
 }
 
-fn eval_if(cond: &Expr) -> bool {
-    match cond {
-        Expr::Bool(b) => {
-            if *b {
-                true
-            } else {
-                false
-            }
-        },
-        Expr::Op(l, op, r) => {
-            match op {
-                Op::And => eval_if(cond),
-                Op::Or => eval_if(cond),
-                _ => eval_cond(l, op, r),
-            }
-           
-             
-        },
-        _ => panic!()
-    }
-}
 
 fn drain_block(mut stmt: Vec<Box<Statement>>, instr: &mut HashMap<String, Value>) {
     for i in stmt.drain(..) {
@@ -90,14 +69,27 @@ fn drain_block(mut stmt: Vec<Box<Statement>>, instr: &mut HashMap<String, Value>
     }
 }
 
-fn eval_cond(l: &Expr, op: &Op, r: &Expr) -> bool {
-    match op {
-        Op::IsEq => l == r,
-        Op::GreaterThan => l > r,
-        Op::LessThan => l < r,
-        Op::NotEq => l != r,
-        _ => panic!("Not a valid conditional!")
+fn eval_cond(cond: &Expr) -> bool {
+    match cond {
+        Expr::Op(l, op, r) => {
+            match op {
+                Op::And => eval_cond(l);, eval_cond(r);
+                Op::IsEq => l == r,
+                Op::GreaterThan => l > r,
+                Op::LessThan => l < r,
+                Op::NotEq => l != r,
+                _ => panic!("Not a valid conditional!")
+        },
+        
+        
     }
+    // match op {
+    //     Op::IsEq => l == r,
+    //     Op::GreaterThan => l > r,
+    //     Op::LessThan => l < r,
+    //     Op::NotEq => l != r,
+    //     _ => panic!("Not a valid conditional!")
+    // }
 }
 
 pub fn eval_expr(e: &Expr, instr: &HashMap<String, Value>) -> Value {
@@ -133,8 +125,8 @@ fn bin_expr(e: &Expr, instr: &HashMap<String, Value>) -> i32 {
         }
         Expr::Number(i) => *i,
         Expr::Op(l, op, r) => {
-            let l = bin_expr(&l,instr);
-            let r = bin_expr(&r,instr);
+            let l = expr(&l,instr);
+            let r = expr(&r,instr);
             match op {
                 Op::Add => l + r, 
                 Op::Sub => l - r,
