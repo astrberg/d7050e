@@ -73,13 +73,17 @@ fn eval_cond(cond: &Expr) -> bool {
     match cond {
         Expr::Op(l, op, r) => {
             match op {
-                Op::And => eval_cond(l);, eval_cond(r);
+                Op::And => eval_cond(l) && eval_cond(r),
+                Op::Or => eval_cond(l) || eval_cond(r),
                 Op::IsEq => l == r,
                 Op::GreaterThan => l > r,
                 Op::LessThan => l < r,
                 Op::NotEq => l != r,
                 _ => panic!("Not a valid conditional!")
+            }
         },
+        Expr::Bool(b) => *b,
+        _ => panic!(),
         
         
     }
@@ -125,8 +129,8 @@ fn bin_expr(e: &Expr, instr: &HashMap<String, Value>) -> i32 {
         }
         Expr::Number(i) => *i,
         Expr::Op(l, op, r) => {
-            let l = expr(&l,instr);
-            let r = expr(&r,instr);
+            let l = bin_expr(&l,instr);
+            let r = bin_expr(&r,instr);
             match op {
                 Op::Add => l + r, 
                 Op::Sub => l - r,

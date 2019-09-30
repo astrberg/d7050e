@@ -20,8 +20,9 @@ fn main() {
 
     let f = parser::ProgramParser::new().parse("fn main() {
         
-        if 2 > 1 && 2 < 3 {
+        if 1 < 2 || false || false || false {
             a = 1;
+            b = a + 2;
         }
 
         }").unwrap();
