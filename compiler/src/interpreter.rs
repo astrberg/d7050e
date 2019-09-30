@@ -43,26 +43,7 @@ pub fn statement(s: Box<Statement>, instr: &mut HashMap<String, Value>) {
             }
 
         },
-        Statement::If(cond, stmt) => {
-            match *cond {
-                Expr::Bool(b) => {
-                    if b {
-                        drain_block(stmt, instr);
-                             
-                    }
-                    
-                },
-                Expr::Op(l, op, r) => {
-                    match op {
-                        Op::And =>
-                        Op::Or =>
-                        Op::Not =>
-                        _ => if eval_if(&l, &op, &r) { drain_block(stmt, instr); }
-                    }
-                }
-                _ => panic!()
-            }
-        }
+        Statement::If(cond, stmt) => { if eval_if(&cond) { drain_block(stmt, instr)}; },
         Statement::Expr(exp) => {
             match *exp {
                 Expr::Op(l, op, r) => {
@@ -81,13 +62,35 @@ pub fn statement(s: Box<Statement>, instr: &mut HashMap<String, Value>) {
     }
 }
 
+fn eval_if(cond: &Expr) -> bool {
+    match cond {
+        Expr::Bool(b) => {
+            if *b {
+                true
+            } else {
+                false
+            }
+        },
+        Expr::Op(l, op, r) => {
+            match op {
+                Op::And => eval_if(cond),
+                Op::Or => eval_if(cond),
+                _ => eval_cond(l, op, r),
+            }
+           
+             
+        },
+        _ => panic!()
+    }
+}
+
 fn drain_block(mut stmt: Vec<Box<Statement>>, instr: &mut HashMap<String, Value>) {
     for i in stmt.drain(..) {
         statement(i, instr);
     }
 }
 
-fn eval_if(l: &Expr, op: &Op, r: &Expr) -> bool {
+fn eval_cond(l: &Expr, op: &Op, r: &Expr) -> bool {
     match op {
         Op::IsEq => l == r,
         Op::GreaterThan => l > r,
@@ -110,9 +113,6 @@ pub fn eval_expr(e: &Expr, instr: &HashMap<String, Value>) -> Value {
 }
    
     
-
-
-
 fn bool_expr(e: &Expr, instr: &HashMap<String, Value>) -> bool {
     match e {
         Expr::Var(i) => match instr.get(&*i) {

@@ -9,30 +9,25 @@ mod interpreter;
 
 fn main() {
     
-/*     let expr = parser::ProgramParser::new().parse("fn main() {
-            if a > b {
-                
-            }
+     let expr = parser::ProgramParser::new().parse("fn main() {
+            let a :bool = true || false && true;
       
     }").unwrap();
-    println!("{:#?}", expr); */
+    println!("{:#?}", expr); 
 
     // let interp = interpreter::bin_expr(&expr);
     // println!("{:?}", interp);
 
-    let f = parser::ProgramParser::new().parse("fn main() {
+//     let f = parser::ProgramParser::new().parse("fn main() {
         
-        if 2 > 1 && 3 < 2 {
-            a = 1;
-        }
+//         if 2 > 1 {
+//             a = 1;
+//         }
 
-        }").unwrap();
-    //println!("{:#?}", f);
+//         }").unwrap();
+//     //println!("{:#?}", f);
     
-   interpreter::interpret(f);
-
-
-
+//    interpreter::interpret(f);
 
 
 
