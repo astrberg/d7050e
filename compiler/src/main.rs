@@ -20,8 +20,9 @@ fn main() {
 
     let f = parser::ProgramParser::new().parse("fn main() {
         if true && 3 == 3 {
-            a = 2;
-            b = 2 + 2;
+            a = true || true;
+            c = 4 + 8;
+            b = 2 + c;
         }
 
         }").unwrap();

@@ -43,7 +43,7 @@ pub fn statement(s: Box<Statement>, instr: &mut HashMap<String, Value>) {
             }
 
         },
-        Statement::If(cond, stmt) => { if eval_cond(&cond, instr) { drain_block(stmt, instr)}; },
+        Statement::If(cond, stmt) => { if eval_bool(&cond, instr) { drain_block(stmt, instr)}; },
         Statement::Expr(exp) => {
             match *exp {
                 Expr::Op(l, op, r) => {
@@ -69,16 +69,16 @@ fn drain_block(mut stmt: Vec<Box<Statement>>, instr: &mut HashMap<String, Value>
     }
 }
 
-fn eval_cond(cond: &Expr, instr: &HashMap<String, Value>) -> bool {
-    match cond {
+fn eval_bool(b: &Expr, instr: &HashMap<String, Value>) -> bool {
+    match b {
         Expr::Var(i) => match instr.get(&*i) {
             Some(Value::Bool(v)) => *v,
             _ => panic!("Unexpected type, expected bool")
         },
         Expr::Op(l, op, r) => {
             match op {
-                Op::And => eval_cond(l, instr) && eval_cond(r, instr),
-                Op::Or => eval_cond(l, instr) || eval_cond(r, instr),
+                Op::And => eval_bool(l, instr) && eval_bool(r, instr),
+                Op::Or => eval_bool(l, instr) || eval_bool(r, instr),
                 Op::IsEq => l == r,
                 Op::GreaterThan => l > r,
                 Op::LessThan => l < r,
@@ -96,34 +96,20 @@ fn eval_cond(cond: &Expr, instr: &HashMap<String, Value>) -> bool {
 pub fn eval_expr(e: &Expr, instr: &HashMap<String, Value>) -> Value {
 
     match e {
-
-        Expr::Bool(_) => Value::Bool(eval_cond(&e, &instr)),
-        Expr::Number(_) => Value::Int(bin_expr(&e, &instr)),
-        Expr::Op(l, op, r) => {
-            match (&**l, &**r) {
-                (Expr::Number(_), Expr::Number(_)) => Value::Int(bin_expr(&e, &instr)),
-                (Expr::Bool(_), Expr::Bool(_)) => Value::Bool(eval_cond(&e, &instr)),
-                _ => panic!("Check types"),
-            }
-        }    
-        _ => panic!("That binary operation is not allowed!"),
+        Expr::Var(i) => match instr.get(&*i) {
+            Some(Value::Int(_)) => Value::Int(eval_bin_expr(&e, &instr)),
+            Some(Value::Bool(_)) => Value::Bool(eval_bool(&e, &instr)),
+            _ => panic!("Unexpected type, expected int"),
+        }
+        Expr::Bool(_) => Value::Bool(eval_bool(&e, &instr)),
+        Expr::Number(_) => Value::Int(eval_bin_expr(&e, &instr)),
+        Expr::Op(_, _, _) => Value::Int(eval_bin_expr(&e, &instr)),
+        _ => panic!()
     }         
-}
-   
-    
-// fn bool_expr(e: &Expr, instr: &HashMap<String, Value>) -> bool {
-//     match e {
-//         Expr::Var(i) => match instr.get(&*i) {
-//             Some(Value::Bool(v)) => *v,
-//             _ => panic!("Unexpected type, expected bool")
-//         }
-//         Expr::Bool(b) => eval_cond(e),
-//         _ => panic!()
-//     }
-// }
+} 
 
 
-fn bin_expr(e: &Expr, instr: &HashMap<String, Value>) -> i32 {
+fn eval_bin_expr(e: &Expr, instr: &HashMap<String, Value>) -> i32 {
     match e {
         Expr::Var(i) => match instr.get(&*i) {
             Some(Value::Int(v)) => *v,
@@ -131,8 +117,8 @@ fn bin_expr(e: &Expr, instr: &HashMap<String, Value>) -> i32 {
         }
         Expr::Number(i) => *i,
         Expr::Op(l, op, r) => {
-            let l = bin_expr(&l,instr);
-            let r = bin_expr(&r,instr);
+            let l = eval_bin_expr(&l,instr);
+            let r = eval_bin_expr(&r,instr);
             match op {
                 Op::Add => l + r, 
                 Op::Sub => l - r,
