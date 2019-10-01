@@ -19,10 +19,9 @@ fn main() {
     // println!("{:?}", interp);
 
     let f = parser::ProgramParser::new().parse("fn main() {
-        
-        if 1 < 2 || false || false || false {
-            a = 1;
-            b = a + 2;
+        if true && 3 == 3 {
+            a = 2;
+            b = 2 + 2;
         }
 
         }").unwrap();
