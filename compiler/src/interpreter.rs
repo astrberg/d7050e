@@ -43,7 +43,7 @@ pub fn statement(s: Box<Statement>, instr: &mut HashMap<String, Value>) {
             }
 
         },
-        Statement::If(cond, stmt) => { if eval_bool(&cond, instr) { drain_block(stmt, instr)}; },
+        Statement::If(cond, stmt) => { if eval_bool(&cond, &instr) { drain_block(stmt, instr)}; },
         Statement::Expr(exp) => {
             match *exp {
                 Expr::Op(l, op, r) => {
@@ -70,62 +70,66 @@ fn drain_block(mut stmt: Vec<Box<Statement>>, instr: &mut HashMap<String, Value>
 }
 
 fn eval_bool(b: &Expr, instr: &HashMap<String, Value>) -> bool {
+    // println!("{:#?}", b);
     match b {
         Expr::Var(i) => match instr.get(&*i) {
             Some(Value::Bool(v)) => *v,
             _ => panic!("Unexpected type, expected bool")
         },
         Expr::Op(l, op, r) => {
+            let ls = eval_bool(&l, &instr);
+            let rs = eval_bool(&r, &instr);         
             match op {
-                Op::And => eval_bool(l, instr) && eval_bool(r, instr),
-                Op::Or => eval_bool(l, instr) || eval_bool(r, instr),
-                Op::IsEq => l == r,
-                Op::GreaterThan => l > r,
-                Op::LessThan => l < r,
-                Op::NotEq => l != r,
+                Op::And => eval_bool(l, &instr) && eval_bool(r, &instr),
+                Op::Or => eval_bool(l, &instr) || eval_bool(r, &instr),
+                Op::IsEq => ls == rs,
+                Op::GreaterThan => ls > rs,
+                Op::LessThan => ls < rs,
+                Op::NotEq => ls != rs,
                 _ => panic!("Not a valid conditional!")
             }
         },
         Expr::Bool(b) => *b,
-        _ => panic!("Check you condition mate!"),
+        Expr::Number(n) => *n,
+        _ => panic!("Check your condition mate!"),
         
         
     }
 }
 
-pub fn eval_expr(e: &Expr, instr: &HashMap<String, Value>) -> Value {
-
+fn eval_expr(e: &Expr, instr: &HashMap<String, Value>) -> Value {
+ 
     match e {
         Expr::Var(i) => match instr.get(&*i) {
-            Some(Value::Int(_)) => Value::Int(eval_bin_expr(&e, &instr)),
-            Some(Value::Bool(_)) => Value::Bool(eval_bool(&e, &instr)),
-            _ => panic!("Unexpected type, expected int"),
+            Some(Value::Int(v)) => Value::Int(*v),
+            Some(Value::Bool(b)) => Value::Bool(*b),
+            _ => panic!("Could not find variable value"),
         }
-        Expr::Bool(_) => Value::Bool(eval_bool(&e, &instr)),
-        Expr::Number(_) => Value::Int(eval_bin_expr(&e, &instr)),
-        Expr::Op(_, _, _) => Value::Int(eval_bin_expr(&e, &instr)),
-        _ => panic!()
-    }         
-} 
-
-
-fn eval_bin_expr(e: &Expr, instr: &HashMap<String, Value>) -> i32 {
-    match e {
-        Expr::Var(i) => match instr.get(&*i) {
-            Some(Value::Int(v)) => *v,
-            _ => panic!("Unexpected type, expected int"),
-        }
-        Expr::Number(i) => *i,
+        Expr::Number(i) => Value::Int(*i),
+        Expr::Bool(b) => Value::Bool(*b),
         Expr::Op(l, op, r) => {
-            let l = eval_bin_expr(&l,instr);
-            let r = eval_bin_expr(&r,instr);
-            match op {
-                Op::Add => l + r, 
-                Op::Sub => l - r,
-                Op::Mul => l * r,
-                Op::Div => l / r,
-                _ => panic!()
+            let l = eval_expr(&l,instr);
+            let r = eval_expr(&r,instr);
+            match (l, r) {
+                (Value::Int(l), Value::Int(r)) => {
+                    match op {
+                        Op::Add => Value::Int(l + r), 
+                        Op::Sub => Value::Int(l - r),
+                        Op::Mul => Value::Int(l * r),
+                        Op::Div => Value::Int(l / r),
+
+                        Op::IsEq => Value::Bool(l == r),
+                        Op::GreaterThan => Value::Bool(l > r),
+                        Op::LessThan => Value::Bool(l < r),
+                        Op::NotEq => Value::Bool(l != r),
+
+                        _ => panic!("Unknown operation at Value::Int")
+                    }
+                },
+                (Value::Bool(_), Value::Bool(_)) => {Value::Bool(eval_bool(&e, &instr))},
+                _ => panic!("Invalid operation!")
             }
+            
         }
         _ => panic!()
     }

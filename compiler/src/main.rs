@@ -19,14 +19,12 @@ fn main() {
     // println!("{:?}", interp);
 
     let f = parser::ProgramParser::new().parse("fn main() {
-        if true && 3 == 3 {
-            a = true || true;
-            c = 4 + 8;
-            b = 2 + c;
-        }
+
+            a = true && false;
+    
 
         }").unwrap();
-    //println!("{:#?}", f);
+    println!("{:#?}", f);
     
    interpreter::interpret(f);
 
