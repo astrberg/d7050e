@@ -100,6 +100,8 @@ fn eval_expr(e: &Expr, instr: &HashMap<String, Value>) -> Value {
                 },
                 (Value::Bool(l), Value::Bool(r)) => {
                     match op {
+                        Op::And => Value::Bool(l && r),
+                        Op::Or => Value::Bool(l || r),
                         Op::IsEq => Value::Bool(l == r),
                         Op::NotEq => Value::Bool(l != r),
                         _ => panic!("Not a valid conditional!")

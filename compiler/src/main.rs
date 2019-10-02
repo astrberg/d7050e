@@ -20,8 +20,7 @@ fn main() {
 
     let f = parser::ProgramParser::new().parse("fn main() {
 
-            a = 3 + 2;
-            b = a + 1;
+            a = 6 != 5 && 6 == 6 && false && true || true;
     
 
         }").unwrap();
