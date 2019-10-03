@@ -10,21 +10,21 @@ mod interpreter;
 fn main() {
     
     //  let expr = parser::ProgramParser::new().parse("fn main() {
-    //         let a :bool = true || false && true;
-      
-    // }").unwrap();
+    //      let a : i32 = 3;
+    //      }").unwrap();
     // println!("{:#?}", expr); 
 
     // let interp = interpreter::bin_expr(&expr);
     // println!("{:?}", interp);
 
-    let f = parser::ProgramParser::new().parse("fn main() {
+    let f = parser::ProgramParser::new().parse("
+    
+    fn main() {
         
-        a = 1;
-        while a < 3 && true {
-            a = a + 1;
-        }
-        }").unwrap();
+        a = false;
+    }       
+        
+        ").unwrap();
     println!("{:#?}", f);
     
    interpreter::interpret(f);

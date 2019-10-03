@@ -14,19 +14,24 @@ fn unbox<T>(value: Box<T>) -> T {
 
 pub fn interpret(mut f: Vec<Box<FunctionDec>>) {
     
-    let mut instructions = HashMap::new(); 
-    
+    let mut program = HashMap::new();
+
     for i in f.drain(..) {
         let func = *i;
         match func {
-            FunctionDec {body, ..} => {
+            FunctionDec {name, body, ..} => {
+                let mut instructions = HashMap::new(); 
+
                 for stmt in body {
                     statement(stmt, &mut instructions);
                 }
+
+                program.insert(name, instructions);
+
             }
         };
     }
-    println!("{:#?}", instructions);
+    println!("{:#?}", program);
    
 }
 
@@ -45,17 +50,20 @@ pub fn statement(s: Box<Statement>, instr: &mut HashMap<String, Value>) {
         },
         Statement::If(cond, stmt) => { if eval_bool(&cond, &instr) { drain_block(stmt, instr)}; },
         Statement::While(cond, stmt) => { eval_while(&cond, stmt, instr) },
+        // Statement::Return(exp) => { instr.insert(k: K, v: V)eval_expr(&exp, &instr); },
         Statement::Expr(exp) => {
             match *exp {
                 Expr::Op(l, op, r) => {
                     match op {
                         Op::Equal => {
-                            instr.insert(unbox(l.clone()).into(), eval_expr(&r, &instr));
+                            if exists(&l, &instr) {
+                                instr.insert(unbox(l.clone()).into(), eval_expr(&r, &instr));
+                            }
                         },
                     _ => panic!()
                     }
                 }
-            _ => panic!()
+            _ => panic!("Unknown Expr!")
             }
         }
         _ => panic!()
@@ -85,7 +93,16 @@ fn eval_bool(cond: &Expr, instr:  &HashMap<String, Value>) -> bool {
         _ => panic!("Could not find bool value!")
     }
 }
+fn exists(e: &Expr, instr: &HashMap<String, Value>) -> bool {
+    match e {
+        Expr::Var(i) => match instr.get(&*i) {
+            Some(Value::Int(_)) |  Some(Value::Bool(_)) => true,
+            _ => panic!("Undeclared variable name"),
+        }
+        _ => panic!("Expr is not a variable")
+    }
 
+}
 
 fn eval_expr(e: &Expr, instr: &HashMap<String, Value>) -> Value {
  
@@ -131,7 +148,7 @@ fn eval_expr(e: &Expr, instr: &HashMap<String, Value>) -> Value {
             }
             
         }
-        _ => panic!()
+        _ => panic!("Could not evaluate expr")
     }
     
 
