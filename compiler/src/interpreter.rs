@@ -62,27 +62,24 @@ pub fn statement(s: Box<Statement>, instr: &mut HashMap<String, Value>) {
     
     }
 }
-fn eval_while(cond: &Expr, mut stmt: Vec<Box<Statement>>, instr: &mut HashMap<String, Value>) {
+fn eval_while(cond: &Expr, stmt: Vec<Box<Statement>>, instr: &mut HashMap<String, Value>) {
 
-    if eval_bool(&cond, &instr) {
-         for i in stmt.drain(..) {
-            println!("{:?}", i);
+    if eval_bool(&cond.clone(), &instr) {
+         for i in stmt.clone().drain(..) {
             statement(i, instr);
-        
         }
-        eval_while(&cond, stmt, instr);
-
+        eval_while(cond, stmt, instr);
     }
-
-
 }
 
 fn drain_block(mut stmt: Vec<Box<Statement>>, instr: &mut HashMap<String, Value>) {
+    
     for i in stmt.drain(..) {
         statement(i, instr);
     }
 }
 fn eval_bool(cond: &Expr, instr:  &HashMap<String, Value>) -> bool {
+    
     match eval_expr(&cond, &instr) {
         Value::Bool(b) => b,
         _ => panic!("Could not find bool value!")

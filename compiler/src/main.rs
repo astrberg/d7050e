@@ -21,7 +21,7 @@ fn main() {
     let f = parser::ProgramParser::new().parse("fn main() {
         
         a = 1;
-        while a < 3 {
+        while a < 3 && true {
             a = a + 1;
         }
         }").unwrap();
