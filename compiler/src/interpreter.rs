@@ -43,7 +43,8 @@ pub fn statement(s: Box<Statement>, instr: &mut HashMap<String, Value>) {
             }
 
         },
-        // Statement::If(cond, stmt) => { if eval_bool(&cond, &instr) { drain_block(stmt, instr)}; },
+        Statement::If(cond, stmt) => { if eval_bool(&cond, &instr) { drain_block(stmt, instr)}; },
+        Statement::While(cond, stmt) => { eval_while(&cond, stmt, instr) },
         Statement::Expr(exp) => {
             match *exp {
                 Expr::Op(l, op, r) => {
@@ -61,13 +62,33 @@ pub fn statement(s: Box<Statement>, instr: &mut HashMap<String, Value>) {
     
     }
 }
+fn eval_while(cond: &Expr, mut stmt: Vec<Box<Statement>>, instr: &mut HashMap<String, Value>) {
 
+    if eval_bool(&cond, &instr) {
+         for i in stmt.drain(..) {
+            println!("{:?}", i);
+            statement(i, instr);
+        
+        }
+        eval_while(&cond, stmt, instr);
+
+    }
+
+
+}
 
 fn drain_block(mut stmt: Vec<Box<Statement>>, instr: &mut HashMap<String, Value>) {
     for i in stmt.drain(..) {
         statement(i, instr);
     }
 }
+fn eval_bool(cond: &Expr, instr:  &HashMap<String, Value>) -> bool {
+    match eval_expr(&cond, &instr) {
+        Value::Bool(b) => b,
+        _ => panic!("Could not find bool value!")
+    }
+}
+
 
 fn eval_expr(e: &Expr, instr: &HashMap<String, Value>) -> Value {
  

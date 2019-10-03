@@ -19,10 +19,11 @@ fn main() {
     // println!("{:?}", interp);
 
     let f = parser::ProgramParser::new().parse("fn main() {
-
-            a = 6 != 5 && 6 == 6 && false && true || true;
-    
-
+        
+        a = 1;
+        while a < 3 {
+            a = a + 1;
+        }
         }").unwrap();
     println!("{:#?}", f);
     
