@@ -21,7 +21,10 @@ fn main() {
     
     fn main() {
         
-        a = false;
+        let a : bool = true;
+        if a {
+
+        }
     }       
         
         ").unwrap();
