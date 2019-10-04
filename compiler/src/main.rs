@@ -6,34 +6,39 @@ lalrpop_mod!(pub parser);
 mod ast;
 mod interpreter;
 
+use std::io::Read;
+use std::fs::File;
+use std::path::Path;
+
 
 fn main() {
     
-    //  let expr = parser::ProgramParser::new().parse("fn main() {
-    //      let a : i32 = 3;
-    //      }").unwrap();
-    // println!("{:#?}", expr); 
+    let ast = match parser::ProgramParser::new().parse(&run("input.rs")) {
+        Ok(Program) => Program,
+        Err(e) => panic!("{:?}", e)
+    };
 
-    // let interp = interpreter::bin_expr(&expr);
-    // println!("{:?}", interp);
-
-    let f = parser::ProgramParser::new().parse("
     
-    fn main() {
-        
-        let a : bool = true;
-        if a {
+    let interpret = interpreter::interpret(&mut ast);
+    println!("{:?}", interpret);
 
-        }
-    }       
-        
-        ").unwrap();
-    println!("{:#?}", f);
+}
+
+
+fn run(file: &str) -> String {
+
+    let mut s = String::new();
+    let path = Path::new(file);
+    let display = path.display();
+
+    let mut file = match File::open(&path) {
+        Ok(file) => file,
+        Err(e) => panic!("Could not open {}: file, error {}", display, e)
+    };
+
+    file.read_to_string(&mut s).unwrap();
     
-   interpreter::interpret(f);
-
-
-
+    s
 }
 
 #[cfg(test)]

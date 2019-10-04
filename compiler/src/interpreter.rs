@@ -8,56 +8,93 @@ pub enum Value {
 }
 
 
+#[derive(Debug)]
+pub struct Compiler {
+
+    instructions: Vec<Instructions>
+}
+
+impl Compiler {
+
+    pub fn new() -> Self {
+        instructions { 
+            scopes: vec![] 
+        }
+    }
+}
+
+#[derive(Debug)]
+pub struct Scope {
+
+    pub scope: HashMap<String, Value>,
+}
+
+impl Scope {
+
+    fn new() -> Self {
+        Scope { 
+            scope: HashMap::new() 
+        }
+    }
+}
+
 fn unbox<T>(value: Box<T>) -> T {
     *value
 }
 
-pub fn interpret(mut f: Vec<Box<FunctionDec>>) {
+pub fn interpret(ast: &mut Vec<Box<FunctionDec>>) -> Vec<Scope> {
     
-    let mut program = HashMap::new();
-
-    for i in f.drain(..) {
+    let mut interpreter = Interpreter::new();
+    
+    for i in ast.drain(..) {
         let func = *i;
         match func {
             FunctionDec {name, body, ..} => {
-                let mut instructions = HashMap::new(); 
 
-                for stmt in body {
-                    statement(stmt, &mut instructions);
-                }
 
-                program.insert(name, instructions);
+                
+                // let mut variables = HashMap::new(); 
+
+                // for stmt in body {
+                //     statement(stmt, &mut variables);
+                // };
+
+                // program.insert(name, variables);
 
             }
         };
     }
-    println!("{:#?}", program);
-   
 }
 
-pub fn statement(s: Box<Statement>, instr: &mut HashMap<String, Value>) {
-    match *s {
+fn statement(stmt: Box<Statement>, variables: &mut HashMap<String, Value>) {
+
+    match *stmt {
         
         Statement::Let(var, _typ, op, exp) => {
             match op {
                 Op::Equal => {
-                    instr.insert(unbox(var.clone()).into(), eval_expr(&exp, &instr));
+                    variables.insert(unbox(var.clone()).into(), eval_expr(&exp, &variables));
                 },
                 _ => panic!()
     
             }
 
         },
-        Statement::If(cond, stmt) => { if eval_bool(&cond, &instr) { drain_block(stmt, instr)}; },
-        Statement::While(cond, stmt) => { eval_while(&cond, stmt, instr) },
-        // Statement::Return(exp) => { instr.insert(k: K, v: V)eval_expr(&exp, &instr); },
+        Statement::If(cond, stmt) => { if eval_bool(&cond, &variables) { 
+            drain_block(stmt, variables)}; 
+            
+            
+            
+        },
+        Statement::While(cond, stmt) => { eval_while(&cond, stmt, variables) },
+        // Statement::Return(exp) => { variables.insert(k: K, v: V)eval_expr(&exp, &variables); },
         Statement::Expr(exp) => {
             match *exp {
                 Expr::Op(l, op, r) => {
                     match op {
                         Op::Equal => {
-                            if exists(&l, &instr) {
-                                instr.insert(unbox(l.clone()).into(), eval_expr(&r, &instr));
+                            if exists(&l, &variables) {
+                                variables.insert(unbox(l.clone()).into(), eval_expr(&r, &variables));
                             }
                         },
                     _ => panic!()
@@ -70,32 +107,33 @@ pub fn statement(s: Box<Statement>, instr: &mut HashMap<String, Value>) {
     
     }
 }
-fn eval_while(cond: &Expr, stmt: Vec<Box<Statement>>, instr: &mut HashMap<String, Value>) {
+fn eval_while(cond: &Expr, stmt: Vec<Box<Statement>>, variables: &mut HashMap<String, Value>) {
 
-    if eval_bool(&cond.clone(), &instr) {
+    if eval_bool(&cond.clone(), &variables) {
          for i in stmt.clone().drain(..) {
-            statement(i, instr);
+            statement(i, variables);
         }
-        eval_while(cond, stmt, instr);
+        eval_while(cond, stmt, variables);
     }
 }
 
-fn drain_block(mut stmt: Vec<Box<Statement>>, instr: &mut HashMap<String, Value>) {
-    
-    for i in stmt.drain(..) {
-        statement(i, instr);
+fn drain_block(mut stmts: Vec<Box<Statement>>, variables: &mut HashMap<String, Value>) {
+    for i in stmts.drain(..) {
+        statement(i, variables);
     }
-}
-fn eval_bool(cond: &Expr, instr:  &HashMap<String, Value>) -> bool {
     
-    match eval_expr(&cond, &instr) {
+   
+}
+fn eval_bool(cond: &Expr, variables:  &HashMap<String, Value>) -> bool {
+    
+    match eval_expr(&cond, &variables) {
         Value::Bool(b) => b,
         _ => panic!("Could not find bool value!")
     }
 }
-fn exists(e: &Expr, instr: &HashMap<String, Value>) -> bool {
+fn exists(e: &Expr, variables: &HashMap<String, Value>) -> bool {
     match e {
-        Expr::Var(i) => match instr.get(&*i) {
+        Expr::Var(i) => match variables.get(&*i) {
             Some(Value::Int(_)) |  Some(Value::Bool(_)) => true,
             _ => panic!("Undeclared variable name"),
         }
@@ -104,10 +142,10 @@ fn exists(e: &Expr, instr: &HashMap<String, Value>) -> bool {
 
 }
 
-fn eval_expr(e: &Expr, instr: &HashMap<String, Value>) -> Value {
+fn eval_expr(e: &Expr, variables: &HashMap<String, Value>) -> Value {
  
     match e {
-        Expr::Var(i) => match instr.get(&*i) {
+        Expr::Var(i) => match variables.get(&*i) {
             Some(Value::Int(v)) => Value::Int(*v),
             Some(Value::Bool(b)) => Value::Bool(*b),
             _ => panic!("Could not find variable value"),
@@ -115,8 +153,8 @@ fn eval_expr(e: &Expr, instr: &HashMap<String, Value>) -> Value {
         Expr::Number(i) => Value::Int(*i),
         Expr::Bool(b) => Value::Bool(*b),
         Expr::Op(l, op, r) => {
-            let l = eval_expr(&l,instr);
-            let r = eval_expr(&r,instr);
+            let l = eval_expr(&l,variables);
+            let r = eval_expr(&r,variables);
             match (l, r) {
                 (Value::Int(l), Value::Int(r)) => {
                     match op {
