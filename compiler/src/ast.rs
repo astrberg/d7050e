@@ -73,7 +73,7 @@ pub struct Params {
 }
 
 impl Expr {
-    pub fn into(self) -> String {
+    pub fn to_string(self) -> String {
         match self {
             Expr::Var(s) => s.to_string(),
             _ => panic!("none"),

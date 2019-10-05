@@ -1,5 +1,6 @@
 use std::collections::HashMap;
 use crate::ast::*;
+use std::error::Error;
 
 #[derive(Debug, Clone)]
 pub enum Value {
@@ -7,23 +8,7 @@ pub enum Value {
     Bool(bool),
 }
 
-
-#[derive(Debug)]
-pub struct Compiler {
-
-    instructions: Vec<Instructions>
-}
-
-impl Compiler {
-
-    pub fn new() -> Self {
-        instructions { 
-            scopes: vec![] 
-        }
-    }
-}
-
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub struct Scope {
 
     pub scope: HashMap<String, Value>,
@@ -36,7 +21,50 @@ impl Scope {
             scope: HashMap::new() 
         }
     }
+   
 }
+
+#[derive(Debug, Default)]
+pub struct Context {
+
+    scopes: Vec<Scope>
+}
+
+impl Context {
+
+    fn new() -> Self {
+        Context { 
+            scopes: vec![] 
+        }
+    }
+
+    fn push(&mut self, scope: Scope) {
+        self.scopes.push(scope);
+        
+    } 
+
+    fn pop(&mut self) {
+        self.scopes.pop();
+        
+    }
+
+    fn insert(&mut self, name: String, val: Value) {
+        self.scopes.last_mut().unwrap().scope.insert(name, val);
+    }
+
+    fn get(&mut self, name: String) -> Option<&Value>{
+        for i in self.scopes.iter().rev(){
+            if let Some(name) = i.scope.get(&name){
+                return Some(&name);
+            } 
+        } 
+        None
+    } 
+
+
+}
+
+
 
 fn unbox<T>(value: Box<T>) -> T {
     *value
@@ -46,42 +74,43 @@ pub fn interpret(ast: &mut Vec<Box<FunctionDec>>) -> Vec<Scope> {
     
     let mut interpreter = Interpreter::new();
     
-    for i in ast.drain(..) {
-        let func = *i;
-        match func {
-            FunctionDec {name, body, ..} => {
-
-
-                
-                // let mut variables = HashMap::new(); 
-
-                // for stmt in body {
-                //     statement(stmt, &mut variables);
-                // };
-
-                // program.insert(name, variables);
-
-            }
-        };
+    for func in ast.iter() {
+        def_fn(&mut interpreter, **func);
     }
+
+    interpreter.scopes
 }
 
-fn statement(stmt: Box<Statement>, variables: &mut HashMap<String, Value>) {
+fn def_fn(interpreter: &mut Interpreter, func: FunctionDec) {
 
-    match *stmt {
+    match func{
+        FunctionDec{name, body, ..} =>  {
+            let mut func_scope = Scope::new();
+            for stmt in func.body.iter() {
+                statement(**stmt, interpreter, &mut func_scope);
+            }
+            interpreter.push(func_scope);  
+        } 
+    } 
+
+
+} 
+
+fn statement(stmt: Statement, context: &mut Context, scope:&mut Scope) -> Statement {
+
+    match stmt {
         
-        Statement::Let(var, _typ, op, exp) => {
+        Statement::Let(var, _typ, op, expr) => {
             match op {
                 Op::Equal => {
-                    variables.insert(unbox(var.clone()).into(), eval_expr(&exp, &variables));
+                    let expr = eval_expr(&expr, context, scope);
+                    context.insert(unbox(var).to_string(), expr);
                 },
-                _ => panic!()
-    
+                _ => panic!("Could not Let assign expr")
             }
-
         },
-        Statement::If(cond, stmt) => { if eval_bool(&cond, &variables) { 
-            drain_block(stmt, variables)}; 
+        Statement::If(cond, stmt) => { if eval_bool(&cond, context, scope) { 
+            return statement(stmt, context, scope);
             
             
             
@@ -106,6 +135,7 @@ fn statement(stmt: Box<Statement>, variables: &mut HashMap<String, Value>) {
         _ => panic!()
     
     }
+    stmt
 }
 fn eval_while(cond: &Expr, stmt: Vec<Box<Statement>>, variables: &mut HashMap<String, Value>) {
 
@@ -117,16 +147,16 @@ fn eval_while(cond: &Expr, stmt: Vec<Box<Statement>>, variables: &mut HashMap<St
     }
 }
 
-fn drain_block(mut stmts: Vec<Box<Statement>>, variables: &mut HashMap<String, Value>) {
-    for i in stmts.drain(..) {
-        statement(i, variables);
-    }
+// fn drain_block(mut stmts: Vec<Box<Statement>>, variables: &mut HashMap<String, Value>) {
+//     for i in stmts.drain(..) {
+//         statement(i, variables);
+//     }
     
    
-}
-fn eval_bool(cond: &Expr, variables:  &HashMap<String, Value>) -> bool {
+// }
+fn eval_bool(cond: &Expr, context: &mut Context, scope: &mut Scope) -> bool {
     
-    match eval_expr(&cond, &variables) {
+    match eval_expr(&cond, context, scope) {
         Value::Bool(b) => b,
         _ => panic!("Could not find bool value!")
     }
@@ -142,19 +172,18 @@ fn exists(e: &Expr, variables: &HashMap<String, Value>) -> bool {
 
 }
 
-fn eval_expr(e: &Expr, variables: &HashMap<String, Value>) -> Value {
+fn eval_expr(e: &Expr, context: &mut Context, scope: &mut Scope) -> Value {
  
     match e {
-        Expr::Var(i) => match variables.get(&*i) {
-            Some(Value::Int(v)) => Value::Int(*v),
-            Some(Value::Bool(b)) => Value::Bool(*b),
-            _ => panic!("Could not find variable value"),
-        }
+        Expr::Var(name) => *context.get(name.to_string()).unwrap(),
+        //      Some(Value::Int(v)) => Value::Int(*v),
+        //      Some(Value::Bool(b)) => Value::Bool(*b),   
+        // } ,
         Expr::Number(i) => Value::Int(*i),
         Expr::Bool(b) => Value::Bool(*b),
         Expr::Op(l, op, r) => {
-            let l = eval_expr(&l,variables);
-            let r = eval_expr(&r,variables);
+            let l = eval_expr(&l, context, scope);
+            let r = eval_expr(&r, context, scope);
             match (l, r) {
                 (Value::Int(l), Value::Int(r)) => {
                     match op {
