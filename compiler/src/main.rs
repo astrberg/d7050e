@@ -13,10 +13,11 @@ use std::path::Path;
 
 fn main() {
     
-    let ast = match parser::ProgramParser::new().parse(&run("input.rs")) {
-        Ok(Program) => Program,
+    let mut ast = match parser::ProgramParser::new().parse(&run("input.rs")) {
+        Ok(p) => p,
         Err(e) => panic!("{:?}", e)
     };
+    // println!("{:#?}", ast);
 
     
     let interpret = interpreter::interpret(&mut ast);

@@ -9,7 +9,7 @@ pub enum Type {
     None,
 }
 
-#[derive(Hash, Eq, Debug, Clone, PartialEq, PartialOrd)]
+#[derive(Debug, Hash, Eq, Clone, PartialEq, PartialOrd)]
 pub enum Expr {
     Number(i32),
     Var(String),
@@ -49,7 +49,7 @@ pub enum Op {
     LessThan,
 }
 
-#[derive(Hash, Eq, Debug, Clone, PartialEq)]
+#[derive(Debug, Hash, Eq, Clone, PartialEq)]
 pub enum Statement {
     Let(Box<Expr>, Box<Expr>, Op, Box<Expr>),
     If(Box<Expr>, Vec<Box<Statement>>),
@@ -104,4 +104,4 @@ impl Debug for Op {
             LessThan => write!(fmt, "<"),
         }
     }
-}
+} 

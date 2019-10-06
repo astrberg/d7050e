@@ -23,9 +23,9 @@ pub Statement: Box<Statement> = {
     <Expr> ";" => Box::new(Statement::Expr(<>)),
 }
 
-pub Expr = Tier<AssignOp, Log>;
-pub Log = Tier<LogOp, Cond>;
-Cond = Tier<CondOp, Sum>;
+Expr = Tier<AssignOp, Log>;
+Log = Tier<LogOp, Cond>;
+pub Cond = Tier<CondOp, Sum>;
 Sum = Tier<SumOp, Factor>;
 Factor = Tier<FactorOp, Term>;
 
