@@ -21,7 +21,7 @@ fn main() {
 
     
     let interpret = interpreter::interpret(&mut ast);
-    println!("{:?}", interpret);
+    println!("{:#?}", interpret);
 
 }
 

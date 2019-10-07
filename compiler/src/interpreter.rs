@@ -6,6 +6,10 @@ pub enum Value {
     Int(i32),
     Bool(bool),
 }
+// #[derive(Debug, Default)]
+// pub struct Func {
+//     pub scope: HashMap<String, Vec<Box<Statement>>>,
+// }
 
 #[derive(Debug, Default)]
 pub struct Scope {
@@ -48,22 +52,20 @@ impl Context {
     }
 
     fn insert(&mut self, name: String, val: Value) {
-        self.scopes.last_mut().expect("I failed to insert!").scope.insert(name, val);
+        self.scopes.last_mut().expect("Could not insert value").scope.insert(name, val);
     }
 
     fn get(&mut self, name: String) -> Option<&Value>{
         for i in self.scopes.iter().rev(){
             if let Some(name) = i.scope.get(&name){
+              
                 return Some(&name);
             } 
         } 
         None
-    } 
-
+    }
 
 }
-
-
 
 fn unbox<T>(value: Box<T>) -> T {
     *value
@@ -74,8 +76,10 @@ pub fn interpret(ast: &mut Vec<Box<FunctionDec>>) -> Vec<Scope> {
     
     let mut context = Context::new();
     for func in ast.iter() {
+        context.push(Scope::new());
         let func = &**func;
         def_fn(func, &mut context);
+        context.pop();
     }
     context.scopes
 
@@ -83,46 +87,43 @@ pub fn interpret(ast: &mut Vec<Box<FunctionDec>>) -> Vec<Scope> {
 }
 
 fn def_fn(func: &FunctionDec, context: &mut Context) {
-
     match func{
-        FunctionDec{name, body, ..} =>  {
-            let mut func_scope = Scope::new();
+  
+        FunctionDec{name, body, ..} =>  { // TODO
             for stmt in func.body.iter() {
                 let stmt = &**stmt;
-                statement(stmt, context, &mut func_scope);
+                statement(stmt, context);
             }
             
         } 
     } 
 
-
 } 
 
-fn statement(stmt: &Statement, context: &mut Context, scope:&mut Scope) -> Statement {
+fn statement(stmt: &Statement, context: &mut Context) -> Statement {
 
     match stmt {
         
         Statement::Let(var, _typ, op, expr) => {
             match op {
                 Op::Equal => {
-                    let expr = eval_expr(&expr, context, scope);
+                    let expr = eval_expr(&expr, context);
                     context.insert(unbox(var.clone()).to_string(), expr);
                 },
                 _ => panic!("Could not Let assign expr")
             }
         },
-        Statement::If(cond, stmts) => { if eval_bool(&cond, context, scope) { 
-                context.push(Scope::new());
-                return statement(&**stmts.first().unwrap(), context, scope);
-            
+        Statement::If(cond, stmts) => { if eval_bool(&cond, context) {
+                context.push(Scope::new()); 
+                statement(&**stmts.first().unwrap(), context);
+                context.pop();
             }
-            context.pop();
             
         },
         Statement::While(cond, stmts) => { 
-                
-                eval_while(&cond, stmts.to_vec(), context, scope);
-
+                context.push(Scope::new());
+                eval_while(&cond, stmts.to_vec(), context);
+                context.pop();
         
          },
         // Statement::Return(exp) => { variables.insert(k: K, v: V)eval_expr(&exp, &variables); },
@@ -131,8 +132,8 @@ fn statement(stmt: &Statement, context: &mut Context, scope:&mut Scope) -> State
                 Expr::Op(l, op, r) => {
                     match op {
                         Op::Equal => {
-                            if exists(l, context, scope) {
-                                let expr = eval_expr(&r, context, scope);
+                            if exists(l, context) {
+                                let expr = eval_expr(&r, context);
                                 context.insert(unbox(l.clone()).to_string(), expr);
                             }
                         },
@@ -147,24 +148,24 @@ fn statement(stmt: &Statement, context: &mut Context, scope:&mut Scope) -> State
     }
     stmt.clone()
 }
-fn eval_while(cond: &Expr, stmts: Vec<Box<Statement>>, context: &mut Context, scope: &mut Scope) {
+fn eval_while(cond: &Expr, stmts: Vec<Box<Statement>>, context: &mut Context) {
 
-    if eval_bool(&cond.clone(), context, scope) {
+    if eval_bool(&cond.clone(), context) {
          for i in stmts.clone().drain(..) {
-            statement(&*i, context, scope);
+            statement(&*i, context);
         }
-        eval_while(cond, stmts, context, scope);
+        eval_while(cond, stmts, context);
     }
 }
 
-fn eval_bool(cond: &Expr, context: &mut Context, scope: &mut Scope) -> bool {
+fn eval_bool(cond: &Expr, context: &mut Context) -> bool {
     
-    match eval_expr(&cond, context, scope) {
+    match eval_expr(&cond, context) {
         Value::Bool(b) => b,
         _ => panic!("Could not find bool value!")
     }
 }
-fn exists(e: &Expr, context: &mut Context, scope: &mut Scope) -> bool {
+fn exists(e: &Expr, context: &mut Context) -> bool {
     match e {
         Expr::Var(i) => match context.get(i.to_string()) {
             Some(Value::Int(_)) |  Some(Value::Bool(_)) => true,
@@ -175,18 +176,15 @@ fn exists(e: &Expr, context: &mut Context, scope: &mut Scope) -> bool {
 
 }
 
-fn eval_expr(e: &Expr, context: &mut Context, scope: &mut Scope) -> Value {
+fn eval_expr(e: &Expr, context: &mut Context) -> Value {
  
     match e {
-        Expr::Var(name) => *context.get(name.to_string()).expect("Its me"),
-        //      Some(Value::Int(v)) => Value::Int(*v),
-        //      Some(Value::Bool(b)) => Value::Bool(*b),   
-        // } ,
+        Expr::Var(name) => *context.get(name.to_string()).expect("Could not find value assigned to variable!"),
         Expr::Number(i) => Value::Int(*i),
         Expr::Bool(b) => Value::Bool(*b),
         Expr::Op(l, op, r) => {
-            let l = eval_expr(&l, context, scope);
-            let r = eval_expr(&r, context, scope);
+            let l = eval_expr(&l, context);
+            let r = eval_expr(&r, context);
             match (l, r) {
                 (Value::Int(l), Value::Int(r)) => {
                     match op {
