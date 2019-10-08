@@ -20,8 +20,8 @@ fn main() {
     println!("{:#?}", ast);
 
     
-    let inter = interpreter::interpret(&mut ast);
-    println!("{:#?}", inter);
+    // let inter = interpreter::interpret(&mut ast);
+    // println!("{:#?}", inter);
 
 }
 

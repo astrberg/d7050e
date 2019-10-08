@@ -7,21 +7,21 @@ pub enum Value {
     Bool(bool),
 }
 
-pub struct Func {
-    pub func: HashMap<String, FunctionDec>,
-}
+// pub struct Funcs {
+//     pub funcs: HashMap<String, FunctionDec>,
+// }
 
-impl Func {
-    fn new() -> Self {
-        Func {
-            func: HashMap::new()
-        }
-    }
+// impl Funcs {
+//     fn new() -> Self {
+//         Funcs {
+//             funcs: HashMap::new()
+//         }
+//     }
 
-    fn insert(&mut self, name: String, func: FunctionDec) {
-        self.insert(name, func);
-    }
-}
+//     fn insert(&mut self, name: String, funcs: FunctionDec) {
+//         self.insert(name, funcs);
+//     }
+// }
 
 #[derive(Debug, Default)]
 pub struct Scope {
@@ -93,37 +93,51 @@ fn unbox<T>(value: Box<T>) -> T {
 
 pub fn interpret(ast: &mut Vec<Box<FunctionDec>>) -> Vec<Scope> {
     
-    let mut funcs = Func::new();
     let mut context = Context::new();
+    let mut funcs : HashMap<String, FunctionDec> = HashMap::new();
 
     for func in ast.iter() {
-        context.push(Scope::new());
-        let f = &**func;
-        match f {
-            FunctionDec {name, ..} => {
-                funcs.insert(name.to_string(), *f);
-                eval_func(funcs, &mut context);
-            }
-        }
-        // context.pop();
+        
+        let func = &**func;
+        eval_func(&func, &mut context, funcs);
+        
+            
     }
+    context.pop();
+    
     context.scopes
 
     
 }
 
-fn eval_func(func: HashMap<String, FunctionDec>, context: &mut Context) {
+fn eval_func(func: &FunctionDec, context: &mut Context, funcs: HashMap<String, FunctionDec>) {
+
+
+    let name = match &func.name {
+            name => name.to_string(),
+            _ => panic!(),
+    };
+
+    for i in func.params.iter() {
+        let param_name = match &i.name {
+            param_name => param_name.to_string(),
+            _ => panic!(),
+        };
+    }
     
-    println!("{:?}", func);
     for stmt in func.body.iter() {
         let stmt = &**stmt;
-        statement(stmt, context, func);
+        statement(stmt, context, funcs);
     }
+
+    context.push(Scope::new());
+    
+
             
 
 } 
 
-fn statement(stmt: &Statement, context: &mut Context, func: &HashMap<String, FunctionDec>) -> Statement {
+fn statement(stmt: &Statement, context: &mut Context, funcs: &HashMap<String, FunctionDec>) -> Statement {
 
     match stmt {
         
@@ -138,14 +152,14 @@ fn statement(stmt: &Statement, context: &mut Context, func: &HashMap<String, Fun
         },
         Statement::If(cond, stmts) => { 
             context.push(Scope::new()); 
-            eval_if(&cond, stmts.to_vec(), context, func);
+            eval_if(&cond, stmts.to_vec(), context, funcs);
             // println!("{:?}", context);
             context.pop();
 
         },
         Statement::While(cond, stmts) => { 
             context.push(Scope::new());
-            eval_while(&cond, stmts.to_vec(), context, func);
+            eval_while(&cond, stmts.to_vec(), context, funcs);
             // println!("{:?}", context);
             context.pop();
     
@@ -170,7 +184,10 @@ fn statement(stmt: &Statement, context: &mut Context, func: &HashMap<String, Fun
                 Expr::Function(name, args) => {
                     for arg in args {
                         let arg = eval_expr(&arg, context);
-                        context.insert(name.to_string(), arg);
+                        // let f = match funcs.get(name) {
+                        //     Some(func) => func.
+                        // }
+                        
                     }
                     
                 },
@@ -183,20 +200,20 @@ fn statement(stmt: &Statement, context: &mut Context, func: &HashMap<String, Fun
     stmt.clone()
 }
 
-fn eval_if(cond: &Expr, stmts: Vec<Box<Statement>>, context: &mut Context, func: HashMap<String, FunctionDec>) {
+fn eval_if(cond: &Expr, stmts: Vec<Box<Statement>>, context: &mut Context, funcs: &HashMap<String, FunctionDec>) {
     if eval_bool(&cond.clone(), context) {
          for i in stmts.clone().drain(..) {
-            statement(&*i, context, func);
+            statement(&*i, context, funcs);
         }
     }
 }
 
-fn eval_while(cond: &Expr, stmts: Vec<Box<Statement>>, context: &mut Context, func: HashMap<String, FunctionDec>) {
+fn eval_while(cond: &Expr, stmts: Vec<Box<Statement>>, context: &mut Context, funcs: &HashMap<String, FunctionDec>) {
     if eval_bool(&cond.clone(), context) {
          for i in stmts.clone().drain(..) {
-            statement(&*i, context, func);
+            statement(&*i, context, funcs);
         }
-    eval_while(cond, stmts, context, func);
+    eval_while(cond, stmts, context, funcs);
     }
 }
 
