@@ -20,8 +20,8 @@ fn main() {
     println!("{:#?}", ast);
 
     
-    let interpret = interpreter::interpret(&mut ast);
-    // println!("{:#?}", interpret);
+    let inter = interpreter::interpret(&mut ast);
+    println!("{:#?}", inter);
 
 }
 
@@ -41,6 +41,9 @@ fn run(file: &str) -> String {
     
     s
 }
+
+
+
 
 #[cfg(test)]
 mod tests {

@@ -6,10 +6,22 @@ pub enum Value {
     Int(i32),
     Bool(bool),
 }
-// #[derive(Debug, Default)]
-// pub struct Func {
-//     pub scope: HashMap<String, Vec<Box<Statement>>>,
-// }
+
+pub struct Func {
+    pub func: HashMap<String, FunctionDec>,
+}
+
+impl Func {
+    fn new() -> Self {
+        Func {
+            func: HashMap::new()
+        }
+    }
+
+    fn insert(&mut self, name: String, func: FunctionDec) {
+        self.insert(name, func);
+    }
+}
 
 #[derive(Debug, Default)]
 pub struct Scope {
@@ -53,7 +65,6 @@ impl Context {
 
     fn insert(&mut self, name: String, value: Value) {
         self.scopes.last_mut().expect("Could not insert value").scope.insert(name, value);
-        // self.scopes.into_iter().scope.insert(name, val);
 
     }
 
@@ -82,37 +93,37 @@ fn unbox<T>(value: Box<T>) -> T {
 
 pub fn interpret(ast: &mut Vec<Box<FunctionDec>>) -> Vec<Scope> {
     
-    
+    let mut funcs = Func::new();
     let mut context = Context::new();
+
     for func in ast.iter() {
         context.push(Scope::new());
-        let func = &**func;
-        def_fn(func, &mut context);
-        context.pop();
+        let f = &**func;
+        match f {
+            FunctionDec {name, ..} => {
+                funcs.insert(name.to_string(), *f);
+                eval_func(funcs, &mut context);
+            }
+        }
+        // context.pop();
     }
     context.scopes
 
     
 }
 
-fn def_fn(func: &FunctionDec, context: &mut Context) {
-    match func{
-  
-        FunctionDec{name, body, ..} =>  { // TODO
-            for stmt in func.body.iter() {
-                let stmt = &**stmt;
-                statement(stmt, context);
-                println!("{:?}", context);
-
-
-            }
+fn eval_func(func: HashMap<String, FunctionDec>, context: &mut Context) {
+    
+    println!("{:?}", func);
+    for stmt in func.body.iter() {
+        let stmt = &**stmt;
+        statement(stmt, context, func);
+    }
             
-        } 
-    } 
 
 } 
 
-fn statement(stmt: &Statement, context: &mut Context) -> Statement {
+fn statement(stmt: &Statement, context: &mut Context, func: &HashMap<String, FunctionDec>) -> Statement {
 
     match stmt {
         
@@ -127,14 +138,14 @@ fn statement(stmt: &Statement, context: &mut Context) -> Statement {
         },
         Statement::If(cond, stmts) => { 
             context.push(Scope::new()); 
-            eval_if(&cond, stmts.to_vec(), context);
+            eval_if(&cond, stmts.to_vec(), context, func);
             // println!("{:?}", context);
             context.pop();
 
         },
         Statement::While(cond, stmts) => { 
             context.push(Scope::new());
-            eval_while(&cond, stmts.to_vec(), context);
+            eval_while(&cond, stmts.to_vec(), context, func);
             // println!("{:?}", context);
             context.pop();
     
@@ -155,7 +166,14 @@ fn statement(stmt: &Statement, context: &mut Context) -> Statement {
                         },
                     _ => panic!()
                     }
-                }
+                },
+                Expr::Function(name, args) => {
+                    for arg in args {
+                        let arg = eval_expr(&arg, context);
+                        context.insert(name.to_string(), arg);
+                    }
+                    
+                },
             _ => panic!("Unknown Expr!")
             }
         }
@@ -165,20 +183,20 @@ fn statement(stmt: &Statement, context: &mut Context) -> Statement {
     stmt.clone()
 }
 
-fn eval_if(cond: &Expr, stmts: Vec<Box<Statement>>, context: &mut Context) {
+fn eval_if(cond: &Expr, stmts: Vec<Box<Statement>>, context: &mut Context, func: HashMap<String, FunctionDec>) {
     if eval_bool(&cond.clone(), context) {
          for i in stmts.clone().drain(..) {
-            statement(&*i, context);
+            statement(&*i, context, func);
         }
     }
 }
 
-fn eval_while(cond: &Expr, stmts: Vec<Box<Statement>>, context: &mut Context) {
+fn eval_while(cond: &Expr, stmts: Vec<Box<Statement>>, context: &mut Context, func: HashMap<String, FunctionDec>) {
     if eval_bool(&cond.clone(), context) {
          for i in stmts.clone().drain(..) {
-            statement(&*i, context);
+            statement(&*i, context, func);
         }
-    eval_while(cond, stmts, context);
+    eval_while(cond, stmts, context, func);
     }
 }
 
@@ -194,7 +212,7 @@ fn exists(e: &Expr, context: &mut Context) -> bool {
         Expr::Var(name) => if let Some(_value) = Some(*context.get(name.to_string()).unwrap()) {
             return true;
         }
-        _ => panic!("Variable is not existing!")
+        _ => panic!("Variable does not exist!")
     }
     return false;
 
