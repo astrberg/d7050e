@@ -17,11 +17,11 @@ fn main() {
         Ok(p) => p,
         Err(e) => panic!("{:?}", e)
     };
-    // println!("{:#?}", ast);
+    println!("{:#?}", ast);
 
     
     let interpret = interpreter::interpret(&mut ast);
-    println!("{:#?}", interpret);
+    // println!("{:#?}", interpret);
 
 }
 
