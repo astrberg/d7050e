@@ -17,7 +17,7 @@ fn main() {
         Ok(p) => p,
         Err(e) => panic!("{:?}", e)
     };
-    println!("{:#?}", ast);
+    // println!("{:#?}", ast);
 
     
     let inter = interpreter::interpret(&mut ast);

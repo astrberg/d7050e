@@ -1,14 +1,16 @@
 fn main() {
 
-    run(3, 4);
+    run(8, 8);    
 
 }
 
 fn run(x: i32, y: i32) {
 
     let c : i32 = x + y;
-
+    c = x;
 }
+
+
 
 
 

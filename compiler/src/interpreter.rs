@@ -50,27 +50,26 @@ impl Context {
     }
 
     fn insert(&mut self, name: String, value: Value) -> Value {
-        self.scopes.last_mut().expect("Could not insert value").scope.insert(name, value);
+       self.scopes.last_mut().expect("Could not insert value").scope.insert(name, value);
         value
     }
 
     fn get(&mut self, name: String) -> Option<&Value>{
         for i in self.scopes.iter().rev(){
             if let Some(value) = i.scope.get(&name){
-                return Some(&value);
-            } 
+                return Some(&value)
+            }
         } 
         None
     }
 
-    fn set(&mut self, name: String, value: Value) -> Value  {
-        let x = Value::None;
+    fn set(&mut self, name: String, value: Value) -> Option<&Value>  {
         for i in self.scopes.iter_mut().rev() {
             if let Some(x) = i.scope.get_mut(&name) {
-                *x = value;
+                *x = value
             }
         }
-        x
+        None
     }
 
 }
@@ -109,28 +108,36 @@ fn eval_func(func: &FunctionDec, context: &mut Context, funcs: &mut HashMap<Stri
 }
 
 fn statement(stmt: &Statement, context: &mut Context, funcs: &mut HashMap<String, FunctionDec>) -> Value {
-
+    let mut res = Value::None;
     match stmt {
         
         Statement::Let(var, _typ, op, expr) => {
             match op {
                 Op::Equal => {
-                    context.insert(unbox(var.clone()).to_string(), eval_expr(&expr, &mut context.clone()))
+                    if context.get(unbox(var.clone()).to_string()).is_some() == false {
+                       res = context.insert(unbox(var.clone()).to_string(), eval_expr(&expr, &mut context.clone()));
+                       res
+                        
+                    } else {
+                        panic!("Variable already assigned!")
+                    }
                 },
                 _ => panic!("Could not Let assign expr")
             }
         },
         Statement::If(cond, stmts) => { 
-            eval_if(&cond, stmts.to_vec(), context, funcs)
+            res = eval_if(&cond, stmts.to_vec(), context, funcs);
+            res
 
         },
         Statement::While(cond, stmts) => { 
-            eval_while(&cond, stmts.to_vec(), context, funcs)
+            res = eval_while(&cond, stmts.to_vec(), context, funcs);
+            res
     
          },
         Statement::Return(expr) => { 
-            eval_expr(&expr, context)
-            // context.insert("return".to_string(), expr);
+            res = eval_expr(&expr, context);
+            res
             
          },
         Statement::Expr(expr) => {
@@ -138,7 +145,9 @@ fn statement(stmt: &Statement, context: &mut Context, funcs: &mut HashMap<String
                 Expr::Op(l, op, r) => {
                     match op {
                         Op::Equal => {
-                            context.set(unbox(l.clone()).to_string(), eval_expr(&r, &mut context.clone()))
+                            res = *context.set(unbox(l.clone()).to_string(), eval_expr(&r, &mut context.clone())).unwrap();
+                            res
+                            
                             
                         },
                     _ => panic!()
@@ -173,6 +182,7 @@ fn eval_fn_call(name: &str, args: &Vec<Box<Expr>>, context: &mut Context, funcs:
             for param in func.params.clone() {
                 context.insert(param.name, args_store[i]);
                 i = i + 1;
+                println!("{:?}", context);
             }
             res = eval_func(&func.clone(), context, funcs);
              
@@ -218,17 +228,6 @@ fn eval_bool(cond: &Expr, context: &mut Context) -> bool {
         Value::Bool(b) => b,
         _ => panic!("Could not find bool value!")
     }
-}
-
-fn exists(e: &Expr, context: &mut Context) -> bool {
-    match e {
-        Expr::Var(name) => if let Some(_value) = Some(*context.get(name.to_string()).unwrap()) {
-            return true;
-        }
-        _ => panic!("Variable does not exist!")
-    }
-    return false;
-
 }
 
 fn eval_expr(e: &Expr, context: &mut Context) -> Value {
