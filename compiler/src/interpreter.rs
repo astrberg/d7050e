@@ -49,9 +49,9 @@ impl Context {
         
     }
 
-    fn insert(&mut self, name: String, value: Value) -> Value {
-       self.scopes.last_mut().expect("Could not insert value").scope.insert(name, value);
-        value
+    fn insert(&mut self, name: String, value: Value) -> Option<Value> {
+       self.scopes.last_mut().expect("Could not insert value").scope.insert(name, value)
+
     }
 
     fn get(&mut self, name: String) -> Option<&Value>{
@@ -66,7 +66,6 @@ impl Context {
     fn set(&mut self, name: String, value: Value) -> Option<Value>  {
         for i in self.scopes.iter_mut().rev() {
             if let Some(x) = i.scope.get_mut(&name) {
-                println!("{:?}", *x);
                 *x = value
             }
             
@@ -117,7 +116,8 @@ fn statement(stmt: &Statement, context: &mut Context, funcs: &mut HashMap<String
             match op {
                 Op::Equal => {
                     if context.get(unbox(var.clone()).to_string()).is_some() == false {
-                       context.insert(unbox(var.clone()).to_string(), eval_expr(&expr, &mut context.clone()))
+                       context.insert(unbox(var.clone()).to_string(), eval_expr(&expr, &mut context.clone()));
+                       Value::None
                        
                     } else {
                         panic!("Variable already assigned!")
@@ -143,7 +143,8 @@ fn statement(stmt: &Statement, context: &mut Context, funcs: &mut HashMap<String
                 Expr::Op(l, op, r) => {
                     match op {
                         Op::Equal => {
-                            context.set(unbox(l.clone()).to_string(), eval_expr(&r, &mut context.clone())).expect("Variable not found in context!")
+                            context.set(unbox(l.clone()).to_string(), eval_expr(&r, &mut context.clone()));
+                            Value::None
                             
                             
                         },
