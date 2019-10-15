@@ -1,16 +1,18 @@
 fn main() {
 
-    fib(1);
-
+    run(2, 2);
 
 }
 
-
-fn fib(x: i32) {
-    if x == 1 {
-        x = 5;
+fn run(x: i32, y: i32) {
+    if true {
+        let z : i32 = x + y - 1;
     }
+
+    return true;
 }
+
+
 
 
 
