@@ -49,9 +49,18 @@ impl Context {
         
     }
 
-    fn insert(&mut self, name: String, value: Value) -> Option<Value> {
-       self.scopes.last_mut().expect("Could not get last element in context!").scope.insert(name, value)
+    fn insert(&mut self, name: String, value: Value) {
+       self.scopes.last_mut().expect("Could not get last element in context!").scope.insert(name, value);
 
+    }
+
+    fn set(&mut self, name: String, value: Value)  {
+        for i in self.scopes.iter_mut().rev() {
+            if let Some(x) = i.scope.get_mut(&name) {
+                *x = value
+            }
+            
+        }
     }
 
     fn get(&mut self, name: String) -> Option<Value>{
@@ -63,15 +72,7 @@ impl Context {
         None
     }
 
-    fn set(&mut self, name: String, value: Value) -> Option<Value>  {
-        for i in self.scopes.iter_mut().rev() {
-            if let Some(x) = i.scope.get_mut(&name) {
-                *x = value
-            }
-            
-        }
-        Some(value)
-    }
+
 
 }
 
@@ -101,7 +102,6 @@ fn eval_func(func: &FunctionDec, context: &mut Context, funcs: &mut HashMap<Stri
     context.push(Scope::new());
     for stmt in func.body.iter() {
         if let Statement::Return(expr) = &**stmt {
-            context.pop();
             return eval_expr(&expr, context, funcs)
 
         }
@@ -113,6 +113,7 @@ fn eval_func(func: &FunctionDec, context: &mut Context, funcs: &mut HashMap<Stri
     println!("{:?}", context);
 
     context.pop();
+
 
     res
 
@@ -126,10 +127,9 @@ fn statement(stmt: &Statement, context: &mut Context, funcs: &mut HashMap<String
             match op {
                 Op::Equal => {
                     if context.get(unbox(var.clone()).to_string()).is_some() == false {
-                       match context.insert(unbox(var.clone()).to_string(), eval_expr(&expr, &mut context.clone(), funcs)) {
-                           None => Value::None,
-                           _ => panic!("Variable is already in context!")
-                       }
+                        let expr = eval_expr(&expr, &mut context.clone(), funcs);
+                        context.insert(unbox(var.clone()).to_string(), expr);
+                        expr
                     } else {
                         panic!("Variable already assigned!")
                     }
@@ -138,12 +138,10 @@ fn statement(stmt: &Statement, context: &mut Context, funcs: &mut HashMap<String
             }
         },
         Statement::If(cond, stmts) => {
-            context.push(Scope::new());
             eval_if(&cond, stmts.to_vec(), context, funcs)
 
         },
         Statement::While(cond, stmts) => { 
-            context.push(Scope::new());
             eval_while(&cond, stmts.to_vec(), context, funcs)
     
         },
@@ -154,7 +152,9 @@ fn statement(stmt: &Statement, context: &mut Context, funcs: &mut HashMap<String
                     match op {
                         Op::Equal => {
                             if context.get(unbox(l.clone()).to_string()).is_some() == true {
-                                context.set(unbox(l.clone()).to_string(), eval_expr(&r, &mut context.clone(), funcs)).unwrap()
+                                let expr = eval_expr(&r, &mut context.clone(), funcs);
+                                context.set(unbox(l.clone()).to_string(), expr);
+                                expr
                                 
                             } else {
                                 panic!("Variable not found!")
@@ -166,9 +166,7 @@ fn statement(stmt: &Statement, context: &mut Context, funcs: &mut HashMap<String
                     }
                 },
                 Expr::Function(_, _) => {
-                    let mut fn_context = Context::new(); // Let's add a new context for the function
-                    fn_context.push(Scope::new());
-                    eval_expr(&expr, &mut fn_context, funcs)
+                    eval_expr(&expr, context, funcs)
                     
                             
                 },
@@ -201,6 +199,7 @@ fn eval_fn_call(name: &str, args: &Vec<Box<Expr>>, context: &mut Context, funcs:
         _ => panic!("function name does not exists")
     };
 
+
     res
 
     
@@ -210,34 +209,33 @@ fn eval_fn_call(name: &str, args: &Vec<Box<Expr>>, context: &mut Context, funcs:
 fn eval_if(cond: &Expr, stmts: Vec<Box<Statement>>, context: &mut Context, funcs: &mut HashMap<String, FunctionDec>) -> Value {
     let mut res = Value::None;
     if eval_bool(&cond.clone(), context, funcs) {
-         for stmt in stmts.clone().drain(..) {
-             if let Statement::Return(expr) = *stmt {
-                    context.pop();
-                    return eval_expr(&expr, context, funcs)
+        res = drain_block(&stmts, context, funcs);
 
-            }
-            res = statement(&*stmt, context, funcs);
-        }
     }
-    context.pop();
 
     res    
 }
 
+fn drain_block(stmts: &Vec<Box<Statement>>, context: &mut Context, funcs: &mut HashMap<String, FunctionDec>) -> Value {
+    context.push(Scope::new());
+    let mut res = Value::None;
+    for stmt in stmts.clone().drain(..) {
+        if let Statement::Return(expr) = *stmt {
+                return eval_expr(&expr, context, funcs)
+
+        }
+        res = statement(&*stmt, context, funcs);
+    }
+    context.pop();
+
+    res
+}
 fn eval_while(cond: &Expr, stmts: Vec<Box<Statement>>, context: &mut Context, funcs: &mut HashMap<String, FunctionDec>) -> Value {
     let mut res = Value::None;
     if eval_bool(&cond.clone(), context, funcs) {
-         for stmt in stmts.clone().drain(..) {
-            if let Statement::Return(expr) = *stmt {
-                    context.pop();
-                    return eval_expr(&expr, context, funcs)
-
-            }
-            res = statement(&*stmt, context, funcs);
-        }
+        res = drain_block(&stmts, context, funcs);
         eval_while(cond, stmts, context, funcs);
     }
-    context.pop();
 
     res
 }
@@ -255,7 +253,11 @@ fn eval_expr(e: &Expr, context: &mut Context, funcs: &mut HashMap<String, Functi
         Expr::Var(name) => context.get(name.to_string()).expect("Variable not found!"),
         Expr::Number(i) => Value::Int(*i),
         Expr::Bool(b) => Value::Bool(*b),
-        Expr::Function(name, args) => eval_fn_call(name, args, context, funcs),       
+        Expr::Function(name, args) => {
+            let mut fn_context = Context::new(); // Let's add a new context for the function
+            fn_context.push(Scope::new()); // So we can add the param names and args
+            eval_fn_call(name, args, &mut fn_context, funcs)
+        },       
         Expr::Op(l, op, r) => {
             let l = eval_expr(&l, context, funcs);
             let r = eval_expr(&r, context, funcs);
