@@ -17,13 +17,10 @@ fn run(x: i32, y: i32) {
 
 
 fn test(y: i32, b: bool) {
-    
-  
-    
-      
-    
+    let a : i32 = 4;
 
-
+    
+    
     
 
 }

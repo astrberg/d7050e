@@ -83,51 +83,49 @@ fn unbox<T>(value: Box<T>) -> T {
 pub fn interpret(ast: &mut Vec<Box<FunctionDec>>) {
     
     let mut funcs : HashMap<String, FunctionDec> = HashMap::new();
-    let mut context = Context::new();
+    let mut main_context = Context::new();
+    // main_context.push(Scope::new());
     
     for func in ast.drain(..) {
         funcs.insert(func.name.to_string(), *func);
     }
 
     let res = match funcs.get(&"main".to_string()) {
-        Some(main) => eval_func(main, &mut context, &mut funcs.clone()),
+        // Some(main) => eval_func(main, &mut context, &mut funcs.clone()),
+        Some(main) => eval_block(&main.body, &mut main_context, &funcs),
+
         _ => panic!("main function not defined!")
     };
     println!("{:?}", res);
       
 }
 
-fn eval_func(func: &FunctionDec, context: &mut Context, funcs: &mut HashMap<String, FunctionDec>) -> Value {
-    let mut res = Value::None;
+fn eval_block(stmts: &Vec<Box<Statement>>, context: &mut Context, funcs: &HashMap<String, FunctionDec>) -> Value {
     context.push(Scope::new());
-    for stmt in func.body.iter() {
-        if let Statement::Return(expr) = &**stmt {
-            return eval_expr(&expr, context, funcs)
+    let mut res = Value::None;
+    for stmt in stmts.iter() {
+         if let Statement::Return(expr) = &**stmt {
+            return eval_expr(expr, context, funcs)
 
-        }
-       
+        } 
        res = statement(stmt, context, funcs);
-
+        
         
     }
     println!("{:?}", context);
 
     context.pop();
-
-
     res
-
-
 }
 
-fn statement(stmt: &Statement, context: &mut Context, funcs: &mut HashMap<String, FunctionDec>) -> Value {
+fn statement(stmt: &Statement, context: &mut Context, funcs: &HashMap<String, FunctionDec>) -> Value {
     match stmt {
 
         Statement::Let(var, _typ, op, expr) => {
             match op {
                 Op::Equal => {
                     if context.get(unbox(var.clone()).to_string()).is_some() == false {
-                        let expr = eval_expr(&expr, &mut context.clone(), funcs);
+                        let expr = eval_expr(&expr, &mut context.clone(), &funcs);
                         context.insert(unbox(var.clone()).to_string(), expr);
                         expr
                     } else {
@@ -137,22 +135,23 @@ fn statement(stmt: &Statement, context: &mut Context, funcs: &mut HashMap<String
                 _ => panic!("Could not Let assign expr")
             }
         },
-        Statement::If(cond, stmts) => {
-            eval_if(&cond, stmts.to_vec(), context, funcs)
+        Statement::If(cond, stmts) => { 
+           eval_if(&cond, stmts.to_vec(), context, funcs)
+           
 
         },
         Statement::While(cond, stmts) => { 
             eval_while(&cond, stmts.to_vec(), context, funcs)
     
         },
-        Statement::Return(_) => panic!("Unexpected return statement!"),
+        Statement::Return(expr) => panic!(),
         Statement::Expr(expr) => {
             match &**expr {
                 Expr::Op(l, op, r) => {
                     match op {
                         Op::Equal => {
                             if context.get(unbox(l.clone()).to_string()).is_some() == true {
-                                let expr = eval_expr(&r, &mut context.clone(), funcs);
+                                let expr = eval_expr(&r, &mut context.clone(), &funcs);
                                 context.set(unbox(l.clone()).to_string(), expr);
                                 expr
                                 
@@ -166,7 +165,7 @@ fn statement(stmt: &Statement, context: &mut Context, funcs: &mut HashMap<String
                     }
                 },
                 Expr::Function(_, _) => {
-                    eval_expr(&expr, context, funcs)
+                    eval_expr(&expr, context, &funcs)
                     
                             
                 },
@@ -178,7 +177,7 @@ fn statement(stmt: &Statement, context: &mut Context, funcs: &mut HashMap<String
     }
 }
 
-fn eval_fn_call(name: &str, args: &Vec<Box<Expr>>, context: &mut Context, funcs: &mut HashMap<String, FunctionDec>) -> Value {
+fn eval_fn_call(name: &str, args: &Vec<Box<Expr>>, context: &mut Context, funcs: &HashMap<String, FunctionDec>) -> Value {
     let res;
     let mut args_store: Vec<Value> = Vec::new();
     for arg in args {
@@ -186,19 +185,18 @@ fn eval_fn_call(name: &str, args: &Vec<Box<Expr>>, context: &mut Context, funcs:
         args_store.push(arg);
     }
 
-   match funcs.get(&name.to_string()) {
+   match funcs.clone().get_mut(&name.to_string()) {
         Some(func) => {
             let mut i = 0;
             for param in func.params.clone() {
                 context.insert(param.name, args_store[i]);
                 i = i + 1;
             }
-            res = eval_func(&func.clone(), context, funcs);
+            res = eval_block(&func.body, context, &funcs);
              
         }
         _ => panic!("function name does not exists")
     };
-
 
     res
 
@@ -206,48 +204,33 @@ fn eval_fn_call(name: &str, args: &Vec<Box<Expr>>, context: &mut Context, funcs:
 }
 
 
-fn eval_if(cond: &Expr, stmts: Vec<Box<Statement>>, context: &mut Context, funcs: &mut HashMap<String, FunctionDec>) -> Value {
+fn eval_if(cond: &Expr, stmts: Vec<Box<Statement>>, context: &mut Context, funcs: &HashMap<String, FunctionDec>) -> Value {
     let mut res = Value::None;
-    if eval_bool(&cond.clone(), context, funcs) {
-        res = drain_block(&stmts, context, funcs);
+    if eval_bool(&cond.clone(), context, &funcs) {
+        res = eval_block(&stmts, context, &funcs);
 
     }
-
     res    
 }
 
-fn drain_block(stmts: &Vec<Box<Statement>>, context: &mut Context, funcs: &mut HashMap<String, FunctionDec>) -> Value {
-    context.push(Scope::new());
-    let mut res = Value::None;
-    for stmt in stmts.clone().drain(..) {
-        if let Statement::Return(expr) = *stmt {
-                return eval_expr(&expr, context, funcs)
-
-        }
-        res = statement(&*stmt, context, funcs);
-    }
-    context.pop();
-
-    res
-}
-fn eval_while(cond: &Expr, stmts: Vec<Box<Statement>>, context: &mut Context, funcs: &mut HashMap<String, FunctionDec>) -> Value {
+fn eval_while(cond: &Expr, stmts: Vec<Box<Statement>>, context: &mut Context, funcs: &HashMap<String, FunctionDec>) -> Value {
     let mut res = Value::None;
     if eval_bool(&cond.clone(), context, funcs) {
-        res = drain_block(&stmts, context, funcs);
+        res = eval_block(&stmts, context, &funcs);
         eval_while(cond, stmts, context, funcs);
     }
 
     res
 }
 
-fn eval_bool(cond: &Expr, context: &mut Context, funcs: &mut HashMap<String, FunctionDec>) -> bool {
-    match eval_expr(&cond, context, funcs) {
+fn eval_bool(cond: &Expr, context: &mut Context, funcs: &HashMap<String, FunctionDec>) -> bool {
+    match eval_expr(&cond, context, &funcs) {
         Value::Bool(b) => b,
         _ => panic!("Could not find bool value!")
     }
 }
 
-fn eval_expr(e: &Expr, context: &mut Context, funcs: &mut HashMap<String, FunctionDec>) -> Value {
+fn eval_expr(e: &Expr, context: &mut Context, funcs: &HashMap<String, FunctionDec>) -> Value {
 
     match e {
         Expr::Var(name) => context.get(name.to_string()).expect("Variable not found!"),
