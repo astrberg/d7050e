@@ -94,26 +94,29 @@ pub fn interpret(ast: &mut Vec<Box<FunctionDec>>) {
 
         _ => panic!("main function not defined!")
     };
+    // println!("{:?}",res);
       
 }
 
 fn eval_block(stmts: &Vec<Box<Statement>>, context: &mut Context, funcs: &HashMap<String, FunctionDec>) -> Value {
     context.push(Scope::new());
     let mut res = Value::None;
-    
+
 
     for stmt in stmts {
-        statement(stmt, context, funcs);
+        // println!("{:?}", stmt);
 
         if let Statement::Return(expr) = &**stmt {
             res = eval_expr(expr, context, funcs);
-
+            break;
         } 
+        statement(stmt, context, funcs);
 
+        
         
     }
 
-    println!("{:?}", res);
+    // println!("{:?}", res);
 
     context.pop();
 
@@ -122,8 +125,6 @@ fn eval_block(stmts: &Vec<Box<Statement>>, context: &mut Context, funcs: &HashMa
 
 fn statement(stmt: &Statement, context: &mut Context, funcs: &HashMap<String, FunctionDec>) -> Value {
     let mut res = Value::None;
-    println!("{:?}", stmt);
-
     match stmt {
 
         Statement::Let(var, _typ, op, expr) => {
@@ -170,7 +171,7 @@ fn statement(stmt: &Statement, context: &mut Context, funcs: &HashMap<String, Fu
                     }
                 },
                 Expr::Function(_, _) => {
-                    eval_expr(&expr, context, &funcs);
+                    eval_expr(&expr, context, &funcs);                    
                     
                 },
                     
