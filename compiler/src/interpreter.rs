@@ -103,9 +103,10 @@ pub fn interpret(ast: &mut Vec<Box<FunctionDec>>) {
 fn eval_block(stmts: &Vec<Box<Statement>>, context: &mut Context, funcs: &HashMap<String, FunctionDec>) -> Value {
     context.push(Scope::new());
     let mut res = Value::None;
-    
+
 
     for stmt in stmts {
+
 
         if let Statement::Return(expr) = &**stmt {
             res = eval_expr(expr, context, funcs);
@@ -113,6 +114,8 @@ fn eval_block(stmts: &Vec<Box<Statement>>, context: &mut Context, funcs: &HashMa
 
         } 
         statement(stmt, context, funcs);
+
+        
         
     }
 
@@ -126,7 +129,6 @@ fn eval_block(stmts: &Vec<Box<Statement>>, context: &mut Context, funcs: &HashMa
 }
 
 fn statement(stmt: &Statement, context: &mut Context, funcs: &HashMap<String, FunctionDec>) -> Value {
-
     match stmt {
 
         Statement::Let(var, _typ, op, expr) => {
