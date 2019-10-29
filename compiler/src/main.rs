@@ -17,11 +17,11 @@ fn main() {
         Ok(p) => p,
         Err(e) => panic!("{:?}", e)
     };
-    // println!("{:#?}", ast);
+    println!("{:#?}", ast);
 
     
-    let inter = interpreter::interpret(&mut ast);
-    // println!("{:#?}", inter);
+    let res = interpreter::interpret(&mut ast);
+    println!("{:#?}", res);
 
 }
 
@@ -50,6 +50,12 @@ mod tests {
     use super::*;
     use crate::ast::*;
 
+    #[test]
+    fn eval_fibonacci() {
+        let mut ast = parser::ProgramParser::new().parse(&run("fibonacci.rs")).unwrap();
+        assert_eq!(interpreter::interpret(&mut ast), interpreter::Value::Int(8));
+    }
+    
     #[test]
     fn test_i32() {
         assert_eq!(
