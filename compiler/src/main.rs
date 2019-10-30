@@ -6,7 +6,7 @@ lalrpop_mod!(pub parser);
 mod types;
 mod ast;
 mod interpreter;
-mod type_checker;
+// mod type_checker;
 
 use std::io::Read;
 use std::fs::File;
@@ -23,7 +23,7 @@ fn main() {
 
     
     let res = interpreter::interpret(&mut ast);
-    println!("{:#?}", res);
+    // println!("{:#?}", res);
 
 }
 

@@ -2,15 +2,9 @@ use std::collections::HashMap;
 use crate::ast::*;
 use crate::types::Type;
 
-// #[derive(Debug, Clone, PartialEq)]
-// pub enum Value {
-//     Int(i32),
-//     Bool(bool),
-//     None,
-// }
-
-pub enum Error {
-    Message(String)
+pub struct Error {
+    message : String,
+    expr : Expr,
 }
 
 #[derive(Debug, Default, Clone)]
@@ -95,7 +89,6 @@ pub fn type_check(ast: &mut Vec<Box<FunctionDec>>) -> Result<Type, Error> {
 
     let res = match funcs.get(&"main".to_string()) {
         Some(main) => {
-            type_params(&main.params);
             eval_block(&main.body, &mut main_context, &funcs)
         },
 
@@ -105,30 +98,15 @@ pub fn type_check(ast: &mut Vec<Box<FunctionDec>>) -> Result<Type, Error> {
     res
       
 }
-fn type_params(params: &Vec<Params>) -> Result<Type, Error> {
-    let res;
-    for param in params {
-        res = match param.data_type {
-            Type::I32 => Ok(Type::I32),
-            Type::Bool => Ok(Type::Bool),
-            _ => Err(Error::Message("Type error in params".to_string())),        
-        }
-    }
-    res
-}
-fn eval_block(stmts: &Vec<Box<Statement>>, context: &mut Context, funcs: &HashMap<String, FunctionDec>) -> Value {
+
+fn eval_block(stmts: &Vec<Box<Statement>>, context: &mut Context, funcs: &HashMap<String, FunctionDec>) -> Result<Type, Error> {
     context.push(Scope::new());
-    let mut res = Value::None;
+    let mut res;
 
 
     for stmt in stmts {
 
-        match res {        
-            Value::Int(val) => return Value::Int(val),
-            Value::Bool(val) => return Value::Bool(val),
-            _ => (),
-        };
-        res = eval_statement(stmt, context, funcs);
+        res = check_statement(stmt, context, funcs);
 
 
     }
@@ -139,26 +117,26 @@ fn eval_block(stmts: &Vec<Box<Statement>>, context: &mut Context, funcs: &HashMa
 
 }
 
-fn eval_statement(stmt: &Statement, context: &mut Context, funcs: &HashMap<String, FunctionDec>) -> Value {
+fn check_statement(stmt: &Statement, context: &mut Context, funcs: &HashMap<String, FunctionDec>) -> Result<Type, Error> {
     match stmt {
 
-        Statement::Let(var, _typ, op, expr) => {
+        Statement::Let(var, typ, op, expr) => {
             match op {
                 Op::Equal => {
                     if context.get(unbox(var.clone()).to_string()).is_some() == false {
-                        let expr = eval_expr(&expr, context, &funcs);
+                        let eval_type = check_expr(&expr, context, &funcs)?;
+                        if **typ != Expr::Type(eval_type) {
+                            return Err(Error { message : "Let assignment excpected type: {:?}".to_string(), expr : **typ })
+                        }
                         context.insert(unbox(var.clone()).to_string(), expr);
-                        Value::None
-                    } else {
-                        panic!("Variable already assigned!")
                     }
+                    return Err(Error { message : "Variable: {:?} is already assigned".to_string(), expr : **var })
                 },
-                _ => panic!("Could not Let assign expr")
             }
         },
-        Statement::If(cond, stmts) => eval_if(&cond, stmts.to_vec(), context, funcs),
-        Statement::While(cond, stmts) => eval_while(&cond, stmts.to_vec(), context, funcs),
-        Statement::Return(expr) => eval_expr(expr, context, funcs),
+        Statement::If(cond, stmts) => check_cond(&cond, stmts.to_vec(), context, funcs),
+        Statement::While(cond, stmts) => check_cond(&cond, stmts.to_vec(), context, funcs),
+        Statement::Return(expr) => check_expr(expr, context, funcs),
         Statement::Expr(expr) => {
             match &**expr {
                 Expr::Op(l, op, r) => {
@@ -187,105 +165,74 @@ fn eval_statement(stmt: &Statement, context: &mut Context, funcs: &HashMap<Strin
     
 }
 
-fn eval_fn_call(name: &str, args: &Vec<Box<Expr>>, context: &mut Context, funcs: &HashMap<String, FunctionDec>) -> Value {
-    let mut args_store: Vec<Value> = Vec::new();
-    for arg in args {
-        let arg = eval_expr(arg, context, funcs);
-        args_store.push(arg);
-    };
+fn check_return(e: &Expr, context: &mut Context, funcs: &HashMap<String, FunctionDec>) {
+    if check_expr(e: &Expr, context: &mut Context, funcs: &HashMap<String, FunctionDec>).is_ok() {
 
-    let mut context = Context::new(); 
-    context.push(Scope::new()); 
-            
-   let res = match funcs.clone().get_mut(&name.to_string()) {
+    }
+}
+
+
+fn check_cond(cond: &Expr, stmts: Vec<Box<Statement>>, context: &mut Context, funcs: &HashMap<String, FunctionDec>) -> Result<Type, Error> {
+
+    if check_expr(&cond.clone(), context, &funcs).is_ok() {
+        return eval_block(&stmts, context, &funcs)
+
+    }
+    return Err(Error { message : "Type must be bool! Expr: {:?} ".to_string(), expr : *cond})
+     
+}
+
+fn check_args(name: &str, args: &Vec<Box<Expr>>, context: &mut Context, funcs: &HashMap<String, FunctionDec>) -> Result<Type, Error> {
+   
+   match funcs.clone().get_mut(&name.to_string()) {
         Some(func) => {
-            let mut i = 0;
-            for param in func.params.clone() {
-                context.insert(param.name, args_store[i].clone());
-                i = i + 1;
+            for (i, param) in func.params.clone().iter().enumerate() {
+                if param.data_type != check_expr(&args[i], context, funcs)? {
+                    return Err(Error { message : "Wrong type for function call arguments: ".to_string(), expr : *args[i] })
+                }
             }
+            let mut context = Context::new(); 
             eval_block(&func.body, &mut context, &funcs)
                 
         }
-        _ => panic!("function is not declared!")
-    };
+        _ => Err(Error { message : "Function could not be found with name: ".to_string(), expr : Expr::Function(name.to_string(), args.to_vec())})
+    }
 
-    res
        
 }
 
-
-fn eval_if(cond: &Expr, stmts: Vec<Box<Statement>>, context: &mut Context, funcs: &HashMap<String, FunctionDec>) -> Value {
-    let mut res = Value::None;
-    if eval_bool(&cond.clone(), context, &funcs) {
-        res = eval_block(&stmts, context, &funcs);
-
-    }
-    res    
-}
-
-fn eval_while(cond: &Expr, stmts: Vec<Box<Statement>>, context: &mut Context, funcs: &HashMap<String, FunctionDec>) -> Value {
-    let mut res = Value::None;
-    if eval_bool(&cond.clone(), context, funcs) {
-        res = eval_block(&stmts, context, &funcs);
-        eval_while(cond, stmts, context, funcs);
-    }
-
-    res
-}
-
-fn eval_bool(cond: &Expr, context: &mut Context, funcs: &HashMap<String, FunctionDec>) -> bool {
-    match eval_expr(&cond, context, &funcs) {
-        Value::Bool(b) => b,
-        _ => panic!("Could not find bool value!")
-    }
-}
-
-fn eval_expr(e: &Expr, context: &mut Context, funcs: &HashMap<String, FunctionDec>) -> Value {
+fn check_expr(e: &Expr, context: &mut Context, funcs: &HashMap<String, FunctionDec>) -> Result<Type, Error> {
 
     match e {
         Expr::Var(name) => context.get(name.to_string()).expect("Variable not found in context!"),
-        Expr::Number(i) => Value::Int(*i),
-        Expr::Bool(b) => Value::Bool(*b),
-        Expr::Function(name, args) => {
-            eval_fn_call(name, args, context, funcs)
-         
-        },       
+        Expr::Number(i) => Type::I32,
+        Expr::Bool(b) => Type::Bool,
+        Expr::Function(name, args) => check_args(name, args, context, funcs),       
         Expr::Op(l, op, r) => {
-            let l = eval_expr(&l, context, funcs);
-            let r = eval_expr(&r, context, funcs);
+            let l = check_expr(&l, context, funcs);
+            let r = check_expr(&r, context, funcs);
             match (l, r) {
-                (Value::Int(l), Value::Int(r)) => {
+                (Ok(Type::I32), Ok(Type::I32)) => {
                     match op {
-                        Op::Add => Value::Int(l + r), 
-                        Op::Sub => Value::Int(l - r),
-                        Op::Mul => Value::Int(l * r),
-                        Op::Div => Value::Int(l / r),
-
-                        Op::IsEq => Value::Bool(l == r),
-                        Op::GreaterThan => Value::Bool(l > r),
-                        Op::LessThan => Value::Bool(l < r),
-                        Op::NotEq => Value::Bool(l != r),
-
-                        _ => panic!("Unknown operation at Value::Int")
+                        Op::Add | Op::Sub | Op::Mul | Op::Div => Ok(Type::I32), 
+                        Op::IsEq | Op::GreaterThan | Op::LessThan | Op::NotEq => Ok(Type::Bool),
+                        _ => Err(Error { message : "Both left and right hand need to be of type i32 in expr: ".to_string(), expr: *e, }),    
+      
                     }
                 },
-                (Value::Bool(l), Value::Bool(r)) => {
+                (Ok(Type::Bool), Ok(Type::Bool)) => {
                     match op {
-                        Op::And => Value::Bool(l && r),
-                        Op::Or => Value::Bool(l || r),
-                        Op::IsEq => Value::Bool(l == r),
-                        Op::NotEq => Value::Bool(l != r),
-                        _ => panic!("Not a valid conditional!")
+                        Op::And | Op::Or | Op::IsEq | Op::NotEq => Ok(Type::Bool),
+                        _ => Err(Error { message : "Both left and right hand need to be of type bool in expr: ".to_string(), expr: *e, }),    
                     }
  
                 },
 
-                _ => panic!("Invalid operation!")
+                _ => Err(Error { message : "Operand not recognized for expr: ".to_string(), expr: *e, }),    
             }
             
         }
-        _ => panic!("Could not evaluate expr")
+        _ => Err(Error { message : "Type checking failed for expr: ".to_string(), expr : *e, }),
     }
     
 

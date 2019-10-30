@@ -117,7 +117,7 @@ fn eval_block(stmts: &Vec<Box<Statement>>, context: &mut Context, funcs: &HashMa
 
     }
     context.pop();
-    
+    println!("{:?}", context);
     res
             
 
@@ -231,10 +231,7 @@ fn eval_expr(e: &Expr, context: &mut Context, funcs: &HashMap<String, FunctionDe
         Expr::Var(name) => context.get(name.to_string()).expect("Variable not found in context!"),
         Expr::Number(i) => Value::Int(*i),
         Expr::Bool(b) => Value::Bool(*b),
-        Expr::Function(name, args) => {
-            eval_fn_call(name, args, context, funcs)
-         
-        },       
+        Expr::Function(name, args) => eval_fn_call(name, args, context, funcs),       
         Expr::Op(l, op, r) => {
             let l = eval_expr(&l, context, funcs);
             let r = eval_expr(&r, context, funcs);
