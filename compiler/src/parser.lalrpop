@@ -1,5 +1,6 @@
 use std::str::FromStr;
 use crate::ast::*;
+use crate::types::Type;
 
 
 grammar;
@@ -77,8 +78,6 @@ Term: Box<Expr> = {
 Type: Type = {
     "i32" => Type::I32,
     "bool" => Type::Bool,
-    "String" => Type::String,
-    "Result" => Type::Result,
 }
 
 Num: i32 = {

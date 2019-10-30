@@ -1,14 +1,17 @@
 use std::collections::HashMap;
 use crate::ast::*;
+use crate::types::Type;
 
-#[derive(Debug, Clone, PartialEq)]
-pub enum Value {
-    Int(i32),
-    Bool(bool),
-    None,
-    Error(String),
+// #[derive(Debug, Clone, PartialEq)]
+// pub enum Value {
+//     Int(i32),
+//     Bool(bool),
+//     None,
+// }
+
+pub enum Error {
+    Message(String)
 }
-
 
 #[derive(Debug, Default, Clone)]
 pub struct Scope {
@@ -81,7 +84,7 @@ fn unbox<T>(value: Box<T>) -> T {
     *value
 }
 
-pub fn interpret(ast: &mut Vec<Box<FunctionDec>>) -> Value {
+pub fn type_check(ast: &mut Vec<Box<FunctionDec>>) -> Result<Type, Error> {
     
     let mut funcs : HashMap<String, FunctionDec> = HashMap::new();
     let mut main_context = Context::new();
@@ -91,7 +94,10 @@ pub fn interpret(ast: &mut Vec<Box<FunctionDec>>) -> Value {
     }
 
     let res = match funcs.get(&"main".to_string()) {
-        Some(main) => eval_block(&main.body, &mut main_context, &funcs),
+        Some(main) => {
+            type_params(&main.params);
+            eval_block(&main.body, &mut main_context, &funcs)
+        },
 
         _ => panic!("main function not defined!")
     };
@@ -99,7 +105,17 @@ pub fn interpret(ast: &mut Vec<Box<FunctionDec>>) -> Value {
     res
       
 }
-
+fn type_params(params: &Vec<Params>) -> Result<Type, Error> {
+    let res;
+    for param in params {
+        res = match param.data_type {
+            Type::I32 => Ok(Type::I32),
+            Type::Bool => Ok(Type::Bool),
+            _ => Err(Error::Message("Type error in params".to_string())),        
+        }
+    }
+    res
+}
 fn eval_block(stmts: &Vec<Box<Statement>>, context: &mut Context, funcs: &HashMap<String, FunctionDec>) -> Value {
     context.push(Scope::new());
     let mut res = Value::None;

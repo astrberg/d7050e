@@ -1,13 +1,5 @@
 use std::fmt::{Debug, Error, Formatter};
-
-#[derive(Copy, Hash, Eq, Debug, Clone, PartialEq, PartialOrd)]
-pub enum Type {
-    I32,
-    Bool,
-    String,
-    Result,
-    None,
-}
+use crate::types::Type;
 
 #[derive(Debug, Hash, Eq, Clone, PartialEq, PartialOrd)]
 pub enum Expr {
