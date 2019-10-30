@@ -2,6 +2,7 @@ use std::collections::HashMap;
 use crate::ast::*;
 use crate::types::Type;
 
+#[derive(Debug)]
 pub struct Error {
     message : String,
     expr : Expr,
@@ -211,8 +212,8 @@ fn check_expr(e: &Expr, context: &mut Context, funcs: &HashMap<String, FunctionD
 
     match e {
         Expr::Var(name) => context.get(name.to_string()),
-        Expr::Number(i) => Ok(Type::I32),
-        Expr::Bool(b) => Ok(Type::Bool),
+        Expr::Number(_) => Ok(Type::I32),
+        Expr::Bool(_) => Ok(Type::Bool),
         Expr::Function(name, args) => check_args(name, args, context, funcs),       
         Expr::Op(l, op, r) => {
             let l = check_expr(&l, context, funcs);

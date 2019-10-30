@@ -22,8 +22,9 @@ fn main() {
     println!("{:#?}", ast);
 
     
-    let res = interpreter::interpret(&mut ast);
-    // println!("{:#?}", res);
+    // let res = interpreter::interpret(&mut ast);
+    let res = type_checker::type_check(&mut ast);
+    println!("{:?}", res);
 
 }
 
