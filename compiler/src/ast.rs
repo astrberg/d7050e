@@ -8,8 +8,6 @@ pub enum Expr {
     Function(String, Vec<Box<Expr>>),
     Op(Box<Expr>, Op, Box<Expr>),
     Bool(bool),
-    Type(Type),
-    Error,
 }
 
 #[derive(Copy, Hash, Eq, Clone, PartialEq, PartialOrd)]
@@ -43,7 +41,7 @@ pub enum Op {
 
 #[derive(Debug, Hash, Eq, Clone, PartialEq)]
 pub enum Statement {
-    Let(Box<Expr>, Box<Expr>, Op, Box<Expr>),
+    Let(String, Type, Op, Box<Expr>),
     If(Box<Expr>, Vec<Box<Statement>>),
     Return(Box<Expr>),
     While(Box<Expr>, Vec<Box<Statement>>),
@@ -54,7 +52,7 @@ pub enum Statement {
 pub struct FunctionDec {
     pub name: String,
     pub params: Vec<Params>,
-    pub return_type: Box<Expr>,
+    pub return_type: Type,
     pub body: Vec<Box<Statement>>,
 }
 

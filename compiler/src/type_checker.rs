@@ -1,12 +1,7 @@
 use std::collections::HashMap;
 use crate::ast::*;
 use crate::types::Type;
-
-#[derive(Debug)]
-pub struct Error {
-    message : String,
-    expr : Expr,
-}
+use crate::error::Error;
 
 #[derive(Debug, Default, Clone)]
 pub struct Scope {
@@ -68,7 +63,7 @@ impl Context {
                 return Ok(value.clone())
             }
         } 
-        return Err(Error { message : "Variable: {:?} is not in context!".to_string(), expr : Expr::Var(name) })
+        return Err(Error::NotInContext(name))
 
     }
 
@@ -93,8 +88,7 @@ pub fn type_check(ast: &mut Vec<Box<FunctionDec>>) -> Result<Type, Error> {
         Some(main) => {
             eval_block(&main.body, &mut context, &funcs, &mut main.clone())
         },
-
-        _ => panic!("main function not defined!")
+        _ => return Err(Error::MainMissing)    
     };
    
     res
@@ -125,17 +119,17 @@ fn check_statement(stmt: &Statement, context: &mut Context, funcs: &HashMap<Stri
         Statement::Let(var, typ, op, expr) => {
             match op {
                 Op::Equal => {
-                    if context.get(unbox(var.clone()).to_string()).is_ok() == false {
+                    if context.get(var.to_string()).is_ok() == false {
                         let eval_type = check_expr(&expr, context, &funcs)?;
-                        if **typ != Expr::Type(eval_type) {
-                            return Err(Error { message : "Let assignment excpected type: {:?}".to_string(), expr : *typ.clone() })
+                        if *typ != eval_type {
+                            return Err(Error::TypeError(*typ, eval_type, *expr.clone()))
                         }
-                        context.insert(unbox(var.clone()).to_string(), eval_type);
+                        context.insert(var.to_string(), eval_type);
                         return Ok(eval_type)
                     }
-                    return Err(Error { message : "Variable: {:?} is already assigned".to_string(), expr : *var.clone() })
+                    return Err(Error::DuplicateError(var.to_string()))
                 },
-                _ => return Err(Error { message : "Unknown operand: {:?} !".to_string(), expr : *expr.clone() })
+                _ => return Err(Error::OperandError(*op, *expr.clone()))
             }
 
         },
@@ -147,10 +141,10 @@ fn check_statement(stmt: &Statement, context: &mut Context, funcs: &HashMap<Stri
                 Expr::Op(l, op, r) => {
                     match op {
                         Op::Equal => {
-                            let var = context.get(unbox(l.clone()).to_string())?;
+                            let var_type = context.get(unbox(l.clone()).to_string())?;
                             let eval_type = check_expr(&r, context, &funcs)?;
-                            if var != eval_type {
-                                return Err(Error { message : "Wrong type! Excpecting: {:?}".to_string(), expr : Expr::Type(var) })
+                            if var_type != eval_type {
+                                return Err(Error::TypeError(var_type, eval_type, *expr.clone()))
 
                             }
                             context.set(unbox(l.clone()).to_string(), eval_type);
@@ -158,91 +152,94 @@ fn check_statement(stmt: &Statement, context: &mut Context, funcs: &HashMap<Stri
                             
                         
                         },
-                        _ => return Err(Error { message : "Unknown operand: {:?} !".to_string(), expr : *expr.clone() })                            
-
+                        _ => return Err(Error::OperandError(*op, *expr.clone()))                            
                     }
                 },
                 Expr::Function(_, _) => check_expr(&expr, context, &funcs),
-                _ => return Err(Error { message : "Unknown expr: {:?} !".to_string(), expr : *expr.clone() })
+                _ => return Err(Error::NotFound(*expr.clone())),
             }
         }
+
     }
     
 }
 
-fn check_return(e: &Expr, context: &mut Context, funcs: &HashMap<String, FunctionDec>, func: &mut FunctionDec) -> Result<Type, Error> {
- 
-    if Expr::Type(check_expr(&e, context, &funcs)?) != *func.return_type {
-        return Err(Error { message : "Wrong return type! {:?} ".to_string(), expr : e.clone()})
+fn check_return(expr: &Expr, context: &mut Context, funcs: &HashMap<String, FunctionDec>, func: &mut FunctionDec) -> Result<Type, Error> {
+    let eval_type = check_expr(&expr, context, &funcs)?;
+    let func_type = func.return_type;
+    if eval_type == func_type {
+            return check_expr(&expr, context, &funcs)
+
     }
-    return check_expr(&e, context, &funcs)
+    return Err(Error::TypeError(func_type, eval_type, expr.clone()))
+
 }
 
 
 fn check_cond(cond: &Expr, stmts: Vec<Box<Statement>>, context: &mut Context, funcs: &HashMap<String, FunctionDec>, func: &mut FunctionDec) -> Result<Type, Error> {
-
-    if check_expr(&cond.clone(), context, &funcs).is_ok() {
+    let eval_type = check_expr(&cond.clone(), context, &funcs)?;
+    if eval_type  == Type::Bool {
         return eval_block(&stmts, context, &funcs, func)
 
     }
-    return Err(Error { message : "Type must be bool! Expr: {:?} ".to_string(), expr : cond.clone()})
+    return Err(Error::TypeError(Type::Bool, eval_type, cond.clone()))
      
 }
 
 fn check_args(name: &str, args: &Vec<Box<Expr>>, context: &mut Context, funcs: &HashMap<String, FunctionDec>) -> Result<Type, Error> {
-   
+    let mut eval_type;
+    let mut fn_context = Context::new();
+    fn_context.push(Scope::new()); 
+ 
    match funcs.clone().get_mut(&name.to_string()) {
         Some(func) => {
             for (i, param) in func.params.clone().iter().enumerate() {
-                if param.data_type != check_expr(&args[i], context, funcs)? {
-                    return Err(Error { message : "Wrong type for function call arguments: ".to_string(), expr : *args[i].clone() })
+                eval_type = check_expr(&args[i], context, funcs)?;
+                if param.data_type != eval_type {
+                    return Err(Error::TypeError(param.data_type, eval_type, *args[i].clone()))
                 }
+                fn_context.insert(param.name.to_string(), eval_type);
+
             }
-            let mut context = Context::new(); 
-            eval_block(&func.body, &mut context, &funcs, &mut func.clone())
-                
+            eval_block(&func.body, &mut fn_context, &funcs, &mut func.clone())
         }
-        _ => Err(Error { message : "Function could not be found with name: ".to_string(), expr : Expr::Function(name.to_string(), args.to_vec())})
+        _ => Err(Error::NotFound(Expr::Function(name.to_string(), args.to_vec())))
     }
 
        
 }
 
-fn check_expr(e: &Expr, context: &mut Context, funcs: &HashMap<String, FunctionDec>) -> Result<Type, Error> {
+fn check_expr(expr: &Expr, context: &mut Context, funcs: &HashMap<String, FunctionDec>) -> Result<Type, Error> {
 
-    match e {
+    match expr {
         Expr::Var(name) => context.get(name.to_string()),
         Expr::Number(_) => Ok(Type::I32),
         Expr::Bool(_) => Ok(Type::Bool),
         Expr::Function(name, args) => check_args(name, args, context, funcs),       
         Expr::Op(l, op, r) => {
-            let l = check_expr(&l, context, funcs);
-            let r = check_expr(&r, context, funcs);
+            let l = check_expr(&l, context, funcs)?;
+            let r = check_expr(&r, context, funcs)?;
             match (l, r) {
-                (Ok(Type::I32), Ok(Type::I32)) => {
+                (Type::I32, Type::I32) => {
                     match op {
                         Op::Add | Op::Sub | Op::Mul | Op::Div => Ok(Type::I32), 
                         Op::IsEq | Op::GreaterThan | Op::LessThan | Op::NotEq => Ok(Type::Bool),
-                        _ => Err(Error { message : "Both left and right hand need to be of type i32 in expr: ".to_string(), expr: e.clone(), }),    
-      
+                        _ => Err(Error::OperandError(*op, expr.clone()))
                     }
                 },
-                (Ok(Type::Bool), Ok(Type::Bool)) => {
+                (Type::Bool, Type::Bool) => {
                     match op {
                         Op::And | Op::Or | Op::IsEq | Op::NotEq => Ok(Type::Bool),
-                        _ => Err(Error { message : "Both left and right hand need to be of type bool in expr: ".to_string(), expr: e.clone(), }),    
+                        _ => Err(Error::OperandError(*op, expr.clone()))
                     }
  
                 },
 
-                _ => Err(Error { message : "Operand not recognized for expr: ".to_string(), expr: e.clone(), }),    
+                _ => Err(Error::TypeError(l, r, expr.clone())),    
             }
             
         }
-        _ => Err(Error { message : "Type checking failed for expr: ".to_string(), expr : e.clone(), }),
     }
-    
-
 
 }
 

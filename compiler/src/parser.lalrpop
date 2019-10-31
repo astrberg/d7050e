@@ -8,8 +8,8 @@ grammar;
 pub Program = <FunctionDec*>;
 
 FunctionDec: Box<FunctionDec> = {
-    "fn" <name:Id> "(" <params:Comma<Params>> ")" "->" <return_type:Expr> "{" <body:Statement*> "}" => Box::new(FunctionDec{name, params, return_type, body}),
-    "fn" <name:Id> "(" <params:Comma<Params>> ")" "{" <body:Statement*> "}" => Box::new(FunctionDec{name, params, return_type:Box::new(Expr::Type(Type::None)), body}),
+    "fn" <name:Id> "(" <params:Comma<Params>> ")" "->" <return_type:Type> "{" <body:Statement*> "}" => Box::new(FunctionDec{name, params, return_type, body}),
+    "fn" <name:Id> "(" <params:Comma<Params>> ")" "{" <body:Statement*> "}" => Box::new(FunctionDec{name, params, return_type:Type::None, body}),
 }
 
 Params: Params = {
@@ -17,7 +17,7 @@ Params: Params = {
 }
 
 pub Statement: Box<Statement> = {
-    "let" <name:Term> ":" <data_type:Term> <assign:AssignOp> <expr:Expr> ";" => Box::new(Statement::Let(<>)),
+    "let" <name:Id> ":" <data_type:Type> <assign:AssignOp> <expr:Expr> ";" => Box::new(Statement::Let(<>)),
     "if" <cond:Log> "{" <body:Statement*> "}" => Box::new(Statement::If(<>)),
     "while" <cond:Log> "{" <body:Statement*> "}" => Box::new(Statement::While(<>)),
     "return" <expr:Expr> ";" => Box::new(Statement::Return(<>)),
@@ -70,7 +70,6 @@ Term: Box<Expr> = {
     Num => Box::new(Expr::Number(<>)),
     Id => Box::new(Expr::Var(<>)),
     Bool => Box::new(Expr::Bool(<>)),
-    Type => Box::new(Expr::Type(<>)),
     Function,
     "(" <Expr> ")",
 }

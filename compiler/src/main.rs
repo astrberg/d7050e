@@ -4,8 +4,9 @@ extern crate lalrpop_util;
 lalrpop_mod!(pub parser);
 
 mod types;
+mod error;
 mod ast;
-mod interpreter;
+// mod interpreter;
 mod type_checker;
 
 use std::io::Read;
@@ -24,7 +25,15 @@ fn main() {
     
     // let res = interpreter::interpret(&mut ast);
     let res = type_checker::type_check(&mut ast);
-    println!("{:?}", res);
+    // match res {
+    //     Ok(t) => println!("{:?}", t),
+    //     type_checker::Error { m, e } => println!("{:?}", e),
+
+    // }
+    match res {
+        Err(e) => println!("{}", e),
+        Ok(t) => println!("{:?}", t),
+    }
 
 }
 
