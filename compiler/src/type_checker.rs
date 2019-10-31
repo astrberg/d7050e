@@ -71,10 +71,6 @@ impl Context {
 
 }
 
-fn unbox<T>(value: Box<T>) -> T {
-    *value
-}
-
 pub fn type_check(ast: &mut Vec<Box<FunctionDec>>) -> Result<Type, Error> {
     
     let mut funcs : HashMap<String, FunctionDec> = HashMap::new();
@@ -90,9 +86,11 @@ pub fn type_check(ast: &mut Vec<Box<FunctionDec>>) -> Result<Type, Error> {
         },
         _ => return Err(Error::MainMissing)    
     };
-   
+    // match res {
+    //     Err(e) => Err(e),
+    //     _ => Ok(()),
+    // }
     res
-      
 }
 
 fn eval_block(stmts: &Vec<Box<Statement>>, context: &mut Context, funcs: &HashMap<String, FunctionDec>, func: &mut FunctionDec) -> Result<Type, Error> {
@@ -141,13 +139,13 @@ fn check_statement(stmt: &Statement, context: &mut Context, funcs: &HashMap<Stri
                 Expr::Op(l, op, r) => {
                     match op {
                         Op::Equal => {
-                            let var_type = context.get(unbox(l.clone()).to_string())?;
+                            let var_type = context.get(l.clone().to_string())?;
                             let eval_type = check_expr(&r, context, &funcs)?;
                             if var_type != eval_type {
                                 return Err(Error::TypeError(var_type, eval_type, *expr.clone()))
 
                             }
-                            context.set(unbox(l.clone()).to_string(), eval_type);
+                            context.set(l.clone().to_string(), eval_type);
                             return Ok(eval_type)
                             
                         

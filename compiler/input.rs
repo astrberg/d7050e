@@ -1,17 +1,13 @@
-fn main(i: i32, b: bool) {
-    let i : i32 = 3 + 3 * 4;
-    if true {
-        i = test(i);
-    }
-    i = true;
-    return i; 
+fn main(i: i32, b: bool) -> i32 {
+    
+    test(3);
+    
 }
 
 
-fn test(a: i32) -> i32 {
-    while true {
-        return 5;
-    }
+fn test(a: i32) -> bool {
+    
+    return a;
     
 
 }
