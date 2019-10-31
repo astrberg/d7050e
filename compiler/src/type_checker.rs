@@ -67,8 +67,6 @@ impl Context {
 
     }
 
-
-
 }
 
 pub fn type_check(ast: &mut Vec<Box<FunctionDec>>) -> Result<Type, Error> {
@@ -82,7 +80,11 @@ pub fn type_check(ast: &mut Vec<Box<FunctionDec>>) -> Result<Type, Error> {
 
     let res = match funcs.get(&"main".to_string()) {
         Some(main) => {
-            eval_block(&main.body, &mut context, &funcs, &mut main.clone())
+            let res = eval_block(&main.body, &mut context, &funcs, &mut main.clone())?;
+            if res != main.return_type {
+                return Err(Error::ReturnError(main.return_type, res, "main".to_string()))
+            }
+            Ok(res)
         },
         _ => return Err(Error::MainMissing)    
     };
@@ -123,7 +125,7 @@ fn check_statement(stmt: &Statement, context: &mut Context, funcs: &HashMap<Stri
                             return Err(Error::TypeError(*typ, eval_type, *expr.clone()))
                         }
                         context.insert(var.to_string(), eval_type);
-                        return Ok(eval_type)
+                        return Ok(Type::None)
                     }
                     return Err(Error::DuplicateError(var.to_string()))
                 },
@@ -146,14 +148,20 @@ fn check_statement(stmt: &Statement, context: &mut Context, funcs: &HashMap<Stri
 
                             }
                             context.set(l.clone().to_string(), eval_type);
-                            return Ok(eval_type)
+                            return Ok(Type::None)
                             
                         
                         },
                         _ => return Err(Error::OperandError(*op, *expr.clone()))                            
                     }
                 },
-                Expr::Function(_, _) => check_expr(&expr, context, &funcs),
+                Expr::Function(_, _) => {
+                    match check_expr(&expr, context, &funcs) {
+                        Ok(_type) => return Ok(Type::None),
+                        Err(e) => return Err(e),
+                    }
+                    
+                },
                 _ => return Err(Error::NotFound(*expr.clone())),
             }
         }
@@ -185,26 +193,30 @@ fn check_cond(cond: &Expr, stmts: Vec<Box<Statement>>, context: &mut Context, fu
 }
 
 fn check_args(name: &str, args: &Vec<Box<Expr>>, context: &mut Context, funcs: &HashMap<String, FunctionDec>) -> Result<Type, Error> {
-    let mut eval_type;
+   
+    let mut arg_type;
     let mut fn_context = Context::new();
     fn_context.push(Scope::new()); 
  
    match funcs.clone().get_mut(&name.to_string()) {
         Some(func) => {
             for (i, param) in func.params.clone().iter().enumerate() {
-                eval_type = check_expr(&args[i], context, funcs)?;
-                if param.data_type != eval_type {
-                    return Err(Error::TypeError(param.data_type, eval_type, *args[i].clone()))
+                arg_type = check_expr(&args[i], context, funcs)?;
+                if param.data_type != arg_type {
+                    return Err(Error::TypeError(param.data_type, arg_type, *args[i].clone()))
                 }
-                fn_context.insert(param.name.to_string(), eval_type);
+                fn_context.insert(param.name.to_string(), arg_type);
 
             }
-            eval_block(&func.body, &mut fn_context, &funcs, &mut func.clone())
+            let res = eval_block(&func.body, &mut fn_context, &funcs, &mut func.clone())?;
+            if res != func.return_type {
+                return Err(Error::ReturnError(func.return_type, res, func.name.to_string()))
+            }
+            Ok(res)
         }
         _ => Err(Error::NotFound(Expr::Function(name.to_string(), args.to_vec())))
     }
 
-       
 }
 
 fn check_expr(expr: &Expr, context: &mut Context, funcs: &HashMap<String, FunctionDec>) -> Result<Type, Error> {

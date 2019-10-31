@@ -20,7 +20,7 @@ fn main() {
         Ok(p) => p,
         Err(e) => panic!("{:?}", e)
     };
-    println!("{:#?}", ast);
+    // println!("{:#?}", ast);
 
     
     // let res = interpreter::interpret(&mut ast);
@@ -46,7 +46,7 @@ fn run(file: &str) -> String {
 
     let mut file = match File::open(&path) {
         Ok(file) => file,
-        Err(e) => panic!("Could not open {}: file, error {}", display, e)
+        Err(e) => panic!("Could not open {}: file, error: {}", display, e)
     };
 
     file.read_to_string(&mut s).unwrap();
