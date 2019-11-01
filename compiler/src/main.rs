@@ -20,7 +20,7 @@ fn main() {
         Ok(p) => p,
         Err(e) => panic!("{:?}", e)
     };
-    // println!("{:#?}", ast);
+    println!("{:#?}", ast);
 
     
     // let res = interpreter::interpret(&mut ast);
@@ -247,11 +247,11 @@ fn run(file: &str) -> String {
 //                 params: vec![
 //                     Params {
 //                         name: "a".to_string(),
-//                         data_type: Type::I32,
+//                         return_type: Type::I32,
 //                     },
 //                     Params {
 //                         name: "b".to_string(),
-//                         data_type: Type::String,
+//                         return_type: Type::String,
 //                     }
 //                 ],
 //                 return_type: Box::new(Expr::Type(Type::Result)),

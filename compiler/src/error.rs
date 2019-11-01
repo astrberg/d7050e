@@ -10,6 +10,8 @@ pub enum Error {
     OperandError(Op, Expr),
     NotFound(Expr),
     NotInContext(String),
+    BoundError(usize, usize),
+    ScopeOutOfBound(String),
     MainMissing,
 
 }
@@ -23,6 +25,8 @@ impl fmt::Display for Error {
              Error::OperandError(ref op, ref expr) => write!(f, "(Unknown operand: {:?} for expr: {:?})", op, expr),
              Error::NotFound(ref expr) => write!(f, "(Expression: {:?} could not be found!)", expr),
              Error::NotInContext(ref var) => write!(f, "(Variable with name: {:?} not found in context)", var),
+             Error::BoundError(ref has, ref was) => write!(f, "(Function excpects: {:?} arguments but {:?} were given!)", has, was),
+             Error::ScopeOutOfBound(ref var) => write!(f, "(Could not insert {:?} into scope", var),
              Error::MainMissing => write!(f, "(Function main is not declared, I will not run without it!)") 
 
          }

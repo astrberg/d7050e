@@ -59,7 +59,7 @@ pub struct FunctionDec {
 #[derive(Debug, Clone, PartialEq)]
 pub struct Params {
     pub name: String,
-    pub data_type: Type,
+    pub return_type: Type,
 }
 
 impl Expr {

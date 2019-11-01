@@ -43,8 +43,8 @@ impl Context {
         
     }
 
-    fn insert(&mut self, name: String, typ: Type) {
-       self.scopes.last_mut().expect("Could not get last element in context!").scope.insert(name, typ);
+    fn insert(&mut self, name: &String, typ: Type) {
+        self.scopes.last_mut().expect("Could not get last item in scope").scope.insert(name.to_string(), typ); 
 
     }
 
@@ -70,41 +70,41 @@ impl Context {
 }
 
 pub fn type_check(ast: &mut Vec<Box<FunctionDec>>) -> Result<Type, Error> {
-    
+    let mut res = Type::None;
     let mut funcs : HashMap<String, FunctionDec> = HashMap::new();
-    let mut context = Context::new();
+    let mut context;
     
     for func in ast.drain(..) {
         funcs.insert(func.name.to_string(), *func);
     }
 
-    let res = match funcs.get(&"main".to_string()) {
-        Some(main) => {
-            let res = eval_block(&main.body, &mut context, &funcs, &mut main.clone())?;
-            if res != main.return_type {
-                return Err(Error::ReturnError(main.return_type, res, "main".to_string()))
-            }
-            Ok(res)
-        },
-        _ => return Err(Error::MainMissing)    
-    };
-    // match res {
-    //     Err(e) => Err(e),
-    //     _ => Ok(()),
-    // }
-    res
+    
+
+    for (_, func) in funcs.iter() {
+        context = Context::new();
+        context.push(Scope::new());
+        for param in &func.params {
+            context.insert(&param.name, param.return_type)
+        }
+        res = eval_block(&func.body, &mut context, &funcs, &mut func.clone())?;
+            
+
+    }
+    Ok(res)
 }
 
 fn eval_block(stmts: &Vec<Box<Statement>>, context: &mut Context, funcs: &HashMap<String, FunctionDec>, func: &mut FunctionDec) -> Result<Type, Error> {
     context.push(Scope::new());
     let mut res = Type::None;
 
-
     for stmt in stmts {
 
         res = check_statement(stmt, context, funcs, func)?;
 
 
+    }
+    if res != func.return_type {
+        return Err(Error::ReturnError(func.return_type, res, func.name.to_string()))
     }
     context.pop();
     
@@ -124,7 +124,7 @@ fn check_statement(stmt: &Statement, context: &mut Context, funcs: &HashMap<Stri
                         if *typ != eval_type {
                             return Err(Error::TypeError(*typ, eval_type, *expr.clone()))
                         }
-                        context.insert(var.to_string(), eval_type);
+                        context.insert(var, eval_type);
                         return Ok(Type::None)
                     }
                     return Err(Error::DuplicateError(var.to_string()))
@@ -200,19 +200,18 @@ fn check_args(name: &str, args: &Vec<Box<Expr>>, context: &mut Context, funcs: &
  
    match funcs.clone().get_mut(&name.to_string()) {
         Some(func) => {
+            if func.params.len() != args.len() {
+                return Err(Error::BoundError(func.params.len(), args.len()))
+            }
             for (i, param) in func.params.clone().iter().enumerate() {
                 arg_type = check_expr(&args[i], context, funcs)?;
-                if param.data_type != arg_type {
-                    return Err(Error::TypeError(param.data_type, arg_type, *args[i].clone()))
+                if param.return_type != arg_type {
+                    return Err(Error::TypeError(param.return_type, arg_type, *args[i].clone()))
                 }
-                fn_context.insert(param.name.to_string(), arg_type);
+                fn_context.insert(&param.name, arg_type);
 
             }
-            let res = eval_block(&func.body, &mut fn_context, &funcs, &mut func.clone())?;
-            if res != func.return_type {
-                return Err(Error::ReturnError(func.return_type, res, func.name.to_string()))
-            }
-            Ok(res)
+            Ok(func.return_type)
         }
         _ => Err(Error::NotFound(Expr::Function(name.to_string(), args.to_vec())))
     }

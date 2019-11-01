@@ -51,7 +51,7 @@ impl Context {
     }
 
     fn insert(&mut self, name: String, value: Value) {
-       self.scopes.last_mut().expect("Could not get last element in context!").scope.insert(name, value);
+       self.scopes.last_mut().unwrap().scope.insert(name, value);
 
     }
 
@@ -129,10 +129,10 @@ fn eval_statement(stmt: &Statement, context: &mut Context, funcs: &HashMap<Strin
                         context.insert(var.to_string(), expr);
                         Value::None
                     } else {
-                        panic!("Variable already assigned!")
+                        panic!()
                     }
                 },
-                _ => panic!("Could not Let assign expr")
+                _ => panic!()
             }
         },
         Statement::If(cond, stmts) => eval_if(&cond, stmts.to_vec(), context, funcs),
@@ -149,7 +149,7 @@ fn eval_statement(stmt: &Statement, context: &mut Context, funcs: &HashMap<Strin
                                 Value::None
                                 
                             } else {
-                                panic!("You are trying to assign a variable that dosn't exist!")
+                                panic!()
                             }                            
                         },
                     _ => panic!()
@@ -159,7 +159,7 @@ fn eval_statement(stmt: &Statement, context: &mut Context, funcs: &HashMap<Strin
                     eval_expr(&expr, context, &funcs);
                     Value::None
                 },
-            _ => panic!("Unknown Expr!")
+            _ => panic!()
             }
         }
     }
@@ -215,14 +215,14 @@ fn eval_while(cond: &Expr, stmts: Vec<Box<Statement>>, context: &mut Context, fu
 fn eval_bool(cond: &Expr, context: &mut Context, funcs: &HashMap<String, FunctionDec>) -> bool {
     match eval_expr(&cond, context, &funcs) {
         Value::Bool(b) => b,
-        _ => panic!("Could not find bool value!")
+        _ => panic!()
     }
 }
 
 fn eval_expr(e: &Expr, context: &mut Context, funcs: &HashMap<String, FunctionDec>) -> Value {
 
     match e {
-        Expr::Var(name) => context.get(name.to_string()).expect("Variable not found in context!"),
+        Expr::Var(name) => context.get(name.to_string()).unwrap(),
         Expr::Number(i) => Value::Int(*i),
         Expr::Bool(b) => Value::Bool(*b),
         Expr::Function(name, args) => eval_fn_call(name, args, context, funcs),       
@@ -242,7 +242,7 @@ fn eval_expr(e: &Expr, context: &mut Context, funcs: &HashMap<String, FunctionDe
                         Op::LessThan => Value::Bool(l < r),
                         Op::NotEq => Value::Bool(l != r),
 
-                        _ => panic!("Unknown operation at Value::Int")
+                        _ => panic!()
                     }
                 },
                 (Value::Bool(l), Value::Bool(r)) => {
@@ -251,16 +251,16 @@ fn eval_expr(e: &Expr, context: &mut Context, funcs: &HashMap<String, FunctionDe
                         Op::Or => Value::Bool(l || r),
                         Op::IsEq => Value::Bool(l == r),
                         Op::NotEq => Value::Bool(l != r),
-                        _ => panic!("Not a valid conditional!")
+                        _ => panic!()
                     }
  
                 },
 
-                _ => panic!("Invalid operation!")
+                _ => panic!()
             }
             
         }
-        _ => panic!("Could not evaluate expr")
+        _ => panic!()
     }
     
 

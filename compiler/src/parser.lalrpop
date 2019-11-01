@@ -13,11 +13,11 @@ FunctionDec: Box<FunctionDec> = {
 }
 
 Params: Params = {
-    <name:Id> ":" <data_type:Type> => Params{<>}
+    <name:Id> ":" <return_type:Type> => Params{<>}
 }
 
 pub Statement: Box<Statement> = {
-    "let" <name:Id> ":" <data_type:Type> <assign:AssignOp> <expr:Expr> ";" => Box::new(Statement::Let(<>)),
+    "let" <name:Id> ":" <return_type:Type> <assign:AssignOp> <expr:Expr> ";" => Box::new(Statement::Let(<>)),
     "if" <cond:Log> "{" <body:Statement*> "}" => Box::new(Statement::If(<>)),
     "while" <cond:Log> "{" <body:Statement*> "}" => Box::new(Statement::While(<>)),
     "return" <expr:Expr> ";" => Box::new(Statement::Return(<>)),
