@@ -6,7 +6,7 @@ lalrpop_mod!(pub parser);
 mod types;
 mod error;
 mod ast;
-mod interpreter;
+// mod interpreter;
 mod type_checker;
 
 use std::io::Read;
@@ -21,6 +21,8 @@ fn main() {
         Err(e) => panic!("{:?}", e)
     };
     println!("{:#?}", ast);
+
+
 
     let type_res = type_checker::type_check(&mut ast);
     match type_res {

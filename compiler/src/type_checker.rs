@@ -77,7 +77,11 @@ pub fn type_check(ast: &mut Vec<Box<FunctionDec>>) -> Result<Type, Error> {
     for func in ast.drain(..) {
         funcs.insert(func.name.to_string(), *func);
     }
-
+    
+    match funcs.get(&"main".to_string()) {
+        Some(_main) => (),
+        _ => return Err(Error::MainMissing)
+    }
     
 
     for (_, func) in funcs.iter() {
