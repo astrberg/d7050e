@@ -8,8 +8,9 @@ fn test(i: i32) -> i32 {
     let a : i32 = 0;
     
     if true {
-        let a : i32 = 5;
+        return a;
     }
+    return a;
 }
 
 

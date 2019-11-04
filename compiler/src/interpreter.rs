@@ -6,7 +6,6 @@ pub enum Value {
     Int(i32),
     Bool(bool),
     None,
-    Error(String),
 }
 
 
@@ -260,11 +259,7 @@ fn eval_expr(e: &Expr, context: &mut Context, funcs: &HashMap<String, FunctionDe
             }
             
         }
-        _ => panic!("Unknown expression!")
     }
-    
-
-
 }
 
 
