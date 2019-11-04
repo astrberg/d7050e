@@ -51,7 +51,7 @@ impl Context {
     }
 
     fn insert(&mut self, name: String, value: Value) {
-       self.scopes.last_mut().unwrap().scope.insert(name, value);
+       self.scopes.last_mut().expect("Could not get last item in context!").scope.insert(name, value);
 
     }
 
@@ -129,10 +129,10 @@ fn eval_statement(stmt: &Statement, context: &mut Context, funcs: &HashMap<Strin
                         context.insert(var.to_string(), expr);
                         Value::None
                     } else {
-                        panic!()
+                        panic!("Variable already declared!")
                     }
                 },
-                _ => panic!()
+                _ => panic!("Unknown operand for let assignment!")
             }
         },
         Statement::If(cond, stmts) => eval_if(&cond, stmts.to_vec(), context, funcs),
@@ -149,17 +149,17 @@ fn eval_statement(stmt: &Statement, context: &mut Context, funcs: &HashMap<Strin
                                 Value::None
                                 
                             } else {
-                                panic!()
+                                panic!("Variable is not declared!")
                             }                            
                         },
-                    _ => panic!()
+                    _ => panic!("Unknown operand for assignment!")
                     }
                 },
                 Expr::Function(_, _) => {
                     eval_expr(&expr, context, &funcs);
                     Value::None
                 },
-            _ => panic!()
+            _ => panic!("Could not match expression in statement!")
             }
         }
     }
@@ -180,7 +180,7 @@ fn eval_fn_call(name: &str, args: &Vec<Box<Expr>>, context: &mut Context, funcs:
             }
             eval_block(&func.body, &mut fn_context, &funcs)        
         },
-        _ => panic!()
+        _ => panic!("Function is not declared!")
     };
     res
 
@@ -215,7 +215,7 @@ fn eval_while(cond: &Expr, stmts: Vec<Box<Statement>>, context: &mut Context, fu
 fn eval_bool(cond: &Expr, context: &mut Context, funcs: &HashMap<String, FunctionDec>) -> bool {
     match eval_expr(&cond, context, &funcs) {
         Value::Bool(b) => b,
-        _ => panic!()
+        _ => panic!("Expression is not a boolean!")
     }
 }
 
@@ -242,7 +242,7 @@ fn eval_expr(e: &Expr, context: &mut Context, funcs: &HashMap<String, FunctionDe
                         Op::LessThan => Value::Bool(l < r),
                         Op::NotEq => Value::Bool(l != r),
 
-                        _ => panic!()
+                        _ => panic!("Unknown operands for lhs i32 and rhs i32!")
                     }
                 },
                 (Value::Bool(l), Value::Bool(r)) => {
@@ -251,16 +251,16 @@ fn eval_expr(e: &Expr, context: &mut Context, funcs: &HashMap<String, FunctionDe
                         Op::Or => Value::Bool(l || r),
                         Op::IsEq => Value::Bool(l == r),
                         Op::NotEq => Value::Bool(l != r),
-                        _ => panic!()
+                        _ => panic!("Unknown operands for lhs bool and rhs bool!")
                     }
  
                 },
 
-                _ => panic!()
+                _ => panic!("Invlid operation for rhs and lhs!")
             }
             
         }
-        _ => panic!()
+        _ => panic!("Unknown expression!")
     }
     
 
