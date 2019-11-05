@@ -39,7 +39,7 @@ impl<'a> Compiler <'a> {
         }
     }
 
-    fn fn_value(&self) -> FunctionValue{
+    fn get_func_return(&self) -> FunctionValue {
         self.fn_value_opt.unwrap()
     }
 
@@ -49,35 +49,37 @@ impl<'a> Compiler <'a> {
         let mut funcs : HashMap<String, FunctionDec> = HashMap::new();
 
         for func in ast.iter() {
-        funcs.insert(func.name.to_string(), *func.clone());
+            funcs.insert(func.name.to_string(), *func.clone());
         }
-
-        let res = match funcs.get(&"main".to_string()) {
-            Some(main) => compile_block(&main.body);
-            _ => panic!("main function not defined!")
-        };
-
-        Ok(())
-
-
-    }
-
-    fn compile_function()
-
-    fn compile_block(stmts: &Vec<Box<Statement>>) -> Value {
-
         let context = Context::create();
-        let module = context.create_module("llvm");
+        let module = context.create_module("compiler");
         let builder = context.create_builder();
-        let execution_engine; 
 
         let fpm = PassManager::create(&module);
         fpm.initialize();
         let execution_engine = module.create_jit_execution_engine(OptimizationLevel::None)?;
 
+        for func in ast {
+            Compiler::compile_func(func.clone(), &context, &module, &builder, &execution_engine);
+        }
+
+        let func: JitFunction<ExprFunc> =
+            unsafe { execution_engine.get_function("main").ok().unwrap() };
+
+        unsafe {
+            println!("\nexecution result : {}", func.call());
+        }
+
+        module.print_to_stderr();
+
+        Ok(()) 
+
+
+    }
+    fn compile_func(func: Box<FunctionDec>, context: &'a Context, module: &'a Module, builder: &'a Builder, execution_engine: &'a ExecutionEngine) {
         let u32_type = context.i32_type();
         let fn_type = u32_type.fn_type(&[], false);
-        let function = module.add_function("expr", fn_type, None);
+        let function = module.add_function(&*func.name, fn_type, None);
         let basic_block = context.append_basic_block(&function, "entry");
         builder.position_at_end(&basic_block);
 
@@ -88,26 +90,27 @@ impl<'a> Compiler <'a> {
             execution_engine: &execution_engine,
             fn_value_opt: Some(function),
             variables: HashMap::new(),
-            //&fpm,
         };
+        compiler.compile_block(&func.body);
 
-        let fun_expr: JitFunction<ExprFunc> =
-            unsafe { execution_engine.get_function("expr").ok().unwrap() };
+    }
 
-        unsafe {
-            println!("\nexecution result : {}", fun_expr.call());
-        }
+    fn compile_block(&mut self, stmts: &Vec<Box<Statement>>) -> InstructionValue {
         for stmt in stmts {
-            compile_stmt(stmt)
-        }            
+            let (stmt, ret) = self.compile_stmt(stmt);
 
+            if ret {
+                return stmt;
+            }
+        }
+        panic!("We neeed the boolean babe!");
     }
 
 
     fn create_entry_block_alloca(&mut self, name: &str) -> PointerValue {
         let builder = self.context.create_builder();
 
-        let entry = self.fn_value().get_first_basic_block().unwrap();
+        let entry = self.get_func_return().get_first_basic_block().unwrap();
 
         match entry.get_first_instruction() {
             Some(first_instr) => builder.position_before(&first_instr),
@@ -119,7 +122,7 @@ impl<'a> Compiler <'a> {
     }
 
 
-    fn compile_stmt(&self, stmt: &Statement) -> (InstructionValue, bool) {
+    fn compile_stmt(&mut self, stmt: &Statement) -> (InstructionValue, bool) {
         match stmt {
 
             Statement::Let(var, _typ, op, expr) => {
@@ -140,7 +143,7 @@ impl<'a> Compiler <'a> {
                     Expr::Op(l, op, r) => {
                         match op {
                             Op::Equal => {
-                                let var = self.get_variable(&l.to_string());
+                                let var = self.get_variable(&l.clone().to_string());
                                 let expr = self.compile_expr(&r);
                                 (self.builder.build_store(*var, expr), false)
                             },
@@ -150,6 +153,11 @@ impl<'a> Compiler <'a> {
                     _ => panic!()
                 }
             },
+            Statement::Return(expr) => {
+                let expr = self.compile_expr(expr);
+                (self.builder.build_return(Some(&expr)), true)
+            },
+
             _ => panic!(),
 
         }
