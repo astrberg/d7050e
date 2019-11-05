@@ -1,12 +1,7 @@
 use std::collections::HashMap;
 use crate::ast::*;
+use crate::values::Value;
 
-#[derive(Debug, Clone, PartialEq)]
-pub enum Value {
-    Int(i32),
-    Bool(bool),
-    None,
-}
 
 
 #[derive(Debug, Default, Clone)]
@@ -76,13 +71,13 @@ impl Context {
 
 }
 
-pub fn interpret(ast: &mut Vec<Box<FunctionDec>>) -> Value {
+pub fn interpret(ast: &Vec<Box<FunctionDec>>) -> Value {
     
     let mut funcs : HashMap<String, FunctionDec> = HashMap::new();
     let mut main_context = Context::new();
     
-    for func in ast.drain(..) {
-        funcs.insert(func.name.to_string(), *func);
+    for func in ast.iter() {
+        funcs.insert(func.name.to_string(), *func.clone());
     }
 
     let res = match funcs.get(&"main".to_string()) {

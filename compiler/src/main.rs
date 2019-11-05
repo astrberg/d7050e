@@ -1,13 +1,17 @@
 #[macro_use]
 extern crate lalrpop_util;
 
+use crate::compiler::*;
+
 lalrpop_mod!(pub parser);
 
 mod types;
+mod values;
 mod error;
 mod ast;
-// mod interpreter;
-mod type_checker;
+mod interpreter;
+// mod type_checker;
+mod compiler;
 
 use std::io::Read;
 use std::fs::File;
@@ -16,21 +20,21 @@ use std::path::Path;
 
 fn main() {
     
-    let mut ast = match parser::ProgramParser::new().parse(&run("input.rs")) {
+    let ast = match parser::ProgramParser::new().parse(&run("input.rs")) {
         Ok(p) => p,
         Err(e) => panic!("{:?}", e)
     };
     println!("{:#?}", ast);
 
+    let res = Compiler::compile(&ast);
 
+    // let type_res = type_checker::type_check(&ast);
+    // match type_res {
+    //     Ok(t) => println!("{:?}", t),
+    //     Err(e) => println!("{:?}", e),
 
-    let type_res = type_checker::type_check(&mut ast);
-    match type_res {
-        Ok(t) => println!("{:?}", t),
-        Err(e) => println!("{:?}", e),
-
-    }
-    // let inter_res = interpreter::interpret(&mut ast);
+    // }
+    // let inter_res = interpreter::interpret(&ast);
 
     // println!("{:#?}", inter_res);
 

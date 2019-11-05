@@ -1,17 +1,9 @@
-fn main(i: i32, b: bool) -> bool{
+fn main() {
     
-    return test(1);
+    test(1);
     
 }
 
-fn test(i: i32) -> i32 {
-    let a : i32 = 0;
-    
-    if true {
-        return a;
-    }
-    return a;
-}
 
 
 

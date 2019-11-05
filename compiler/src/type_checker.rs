@@ -69,13 +69,13 @@ impl Context {
 
 }
 
-pub fn type_check(ast: &mut Vec<Box<FunctionDec>>) -> Result<Type, Error> {
+pub fn type_check(ast: &Vec<Box<FunctionDec>>) -> Result<Type, Error> {
     let mut res = Type::None;
     let mut funcs : HashMap<String, FunctionDec> = HashMap::new();
     let mut context;
     
-    for func in ast.drain(..) {
-        funcs.insert(func.name.to_string(), *func);
+    for func in ast.iter() {
+        funcs.insert(func.name.to_string(), *func.clone());
     }
     
     match funcs.get(&"main".to_string()) {
