@@ -1,7 +1,7 @@
 #[macro_use]
 extern crate lalrpop_util;
 
-use crate::compiler::*;
+use crate::codegen::*;
 
 lalrpop_mod!(pub parser);
 
@@ -11,7 +11,7 @@ mod error;
 mod ast;
 mod interpreter;
 // mod type_checker;
-mod compiler;
+mod codegen;
 
 use std::io::Read;
 use std::fs::File;
@@ -26,7 +26,7 @@ fn main() {
     };
     println!("{:#?}", ast);
 
-    let res = Compiler::compile(&ast);
+    Codegen::codegen(&ast);
 
     // let type_res = type_checker::type_check(&ast);
     // match type_res {

@@ -1,8 +1,11 @@
 fn main() {
     
-    let a : i32 = 5 + 3;
-    return a;
+    test(3);
     
+}
+
+fn test(a : i32) {
+
 }
 
 
