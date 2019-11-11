@@ -1,14 +1,5 @@
-
-
-fn test(a : i32) -> i32 {
-    return 4;
-}
-
-
-fn main() {
-    
-   return test(3);
-    
+fn main(a: i32) {
+    return 3;
 }
 
 
