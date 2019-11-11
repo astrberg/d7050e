@@ -15,7 +15,7 @@ use crate::ast::*;
 
 type ExprFunc = unsafe extern "C" fn() -> i32;
 
-pub struct Codegen<'a>{
+pub struct Codegen<'a> {
     context: &'a Context,
     module: &'a Module,
     builder: &'a Builder,
@@ -24,7 +24,7 @@ pub struct Codegen<'a>{
     fn_value_opt: Option<FunctionValue>
 }
 
-impl<'a> Codegen <'a> {
+impl<'a> Codegen <'a>{
 
 
     #[inline]
@@ -35,6 +35,7 @@ impl<'a> Codegen <'a> {
         }
     }
 
+    #[inline]
     fn get_func_return(&self) -> FunctionValue {
         self.fn_value_opt.unwrap()
     }
@@ -76,7 +77,7 @@ impl<'a> Codegen <'a> {
         let fn_type = u32_type.fn_type(&[], false);
         let function = module.add_function(&*func.name, fn_type, None);
         let basic_block = context.append_basic_block(&function, "entry");
-        builder.position_at_end(&basic_block);
+        builder.position_at_end(&basic_block);  
 
         let mut compiler = Codegen {
             context: &context,
@@ -86,6 +87,10 @@ impl<'a> Codegen <'a> {
             fn_value_opt: Some(function),
             variables: HashMap::new(),
         };
+
+        // for (i, param) in func.params.iter().enumerate() {
+        //     let alloca = self.var_alloca(param);
+        // }   
         compiler.codegen_block(&func.body);
 
     }
@@ -172,8 +177,13 @@ impl<'a> Codegen <'a> {
             Expr::Bool(b) => self.context.bool_type().const_int(*b as u64, false),
             Expr::Number(i) => self.context.i32_type().const_int(*i as u64, false),
             Expr::Function(name, args) => {
-                let func = self.module.get_function(name).unwrap();
-                let value = self.builder.build_call(func, &[args], &name).left().unwrap();
+                let func = self.module.get_function(name).expect("Could not get function");
+                let mut codegen_args: Vec<BasicValueEnum> = Vec::with_capacity(args.len());
+                for arg in args {
+                    codegen_args.push(self.codegen_expr(arg).into());
+                }
+                
+                let value = self.builder.build_call(func, &codegen_args, &name).try_as_basic_value().left().expect("No value in function");
                  
                 value.into_int_value()
             }
