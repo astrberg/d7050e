@@ -22,9 +22,7 @@ pub struct Codegen<'a> {
     context: &'a Context,
     module: &'a Module,
     builder: &'a Builder,
-    execution_engine: &'a ExecutionEngine,
     variables: HashMap<String, PointerValue>,
-    fn_value_opt: Option<FunctionValue>
 }
 
 impl<'a> Codegen <'a>{
@@ -43,19 +41,42 @@ impl<'a> Codegen <'a>{
         self.fn_value_opt.unwrap()
     }
 
-    pub fn codegen(ast: &Vec<Box<FunctionDec>>) -> Result<(), Box<Error>> {
-        
-
+    pub fn init() -> Self {
         let context = Context::create();
-        let module = context.create_module("codegen");
-        let builder = context.create_builder();
+        let mut codegen = Codegen {
+            context: &context,
+            builder: &context.create_builder(),
+            module: &context.create_module("main"),
+            variables: HashMap::new(),
+        };
+        codegen
+    }
 
-        let fpm = PassManager::create(&module);
-        fpm.initialize();
-        let execution_engine = module.create_jit_execution_engine(OptimizationLevel::None)?;
-
+    pub fn codegen(&mut self, ast: &Vec<Box<FunctionDec>>) -> Result<(), Box<Error>> {
+       
+        let execution_engine = self.module.create_jit_execution_engine(OptimizationLevel::None)?;
+        let param_types: Vec<BasicTypeEnum>;
         for func in ast {
-            Codegen::codegen_func(func.clone(), &context, &module, &builder, &execution_engine);
+            param_types = Vec::<BasicTypeEnum>::new();
+            // Codegen::codegen_func(func.clone(), &context, &module, &builder, &execution_engine);
+            for param in func.params.iter() {
+                match param.return_type {
+                    Type::I32 => param_types.push(self.context.i32_type().into()),
+                    Type::Bool => param_types.push(self.context.bool_type().into()),
+                }
+            }
+            let fn_type = match func.return_type {
+                Type::I32 => self.context.i32_type().fn_type(&param_types, false),
+                Type::Bool => self.context.bool_type().fn_type(&param_types, false),
+                Type::None => self.context.void_type().fn_type(&param_types, false), // void
+            };
+
+            let function = self.module.add_function(&func.name, fn_type, None);
+
+        }
+        
+        for func in ast {
+            self.codegen_func(func);
         }
 
         let func: JitFunction<ExprFunc> =
@@ -65,41 +86,32 @@ impl<'a> Codegen <'a>{
             println!("\nexecution result : {}", func.call());
         }
 
-        module.print_to_stderr();
+        self.module.print_to_stderr();
 
         Ok(()) 
 
 
     }
-    fn codegen_func(func: Box<FunctionDec>, context: &'a Context, module: &'a Module, builder: &'a Builder, execution_engine: &'a ExecutionEngine) {
-        let u32_type = context.i32_type();
-        let fn_type = u32_type.fn_type(&[], false);
-        let typ = match func.return_type {
-            Type::I32 => context.i32_type(),
-            Type::Bool => context.bool_type(),
-            Type::None => context.void_type(),
 
-        };
-        let function = module.add_function(&*func.name, fn_type, None);
-        let basic_block = context.append_basic_block(&function, "entry");
-        builder.position_at_end(&basic_block);  
+    fn codegen_func(&mut self, func: &Box<FunctionDec>) {
+        let function = self.module.get_function(&func.name).unwrap();
+        let block = self.context.append_basic_block(&function, "entry");        
 
-        let mut codegen = Codegen {
-            context: &context,
-            builder: &builder,
-            module: &module,
-            execution_engine: &execution_engine,
-            fn_value_opt: Some(function),
-            variables: HashMap::new(),
-        };
+        self.builder.position_at_end(&block);
+
+        self.variables.reserve(func.params.len());
+
+        for (i, param) in function.get_param_iter().enumerate() {
+            let param_name = func.params[i].name;
+            let alloca = self.var_alloca(&param_name);
+
+            self.builder.build_store(alloca, param);
+
+            self.variables.insert(func.params[i].name, alloca);
+        }        
+
         
-        for (i, param) in func.params.iter().enumerate() {
-            let param_name = function.get_nth_param(i as u32).expect("Could not get param");
-            let alloca = codegen.var_alloca(&param.name);
-
-            codegen.builder.build_store(alloca, param_name);
-            codegen.variables.insert(param.name.clone(), alloca);
-        }
+        
 
         codegen.codegen_block(&func.body);
 
@@ -107,15 +119,15 @@ impl<'a> Codegen <'a>{
 
     fn codegen_block(&mut self, stmts: &Vec<Box<Statement>>) -> InstructionValue {
         
-
         for stmt in stmts {
-            let (stmt, ret) = self.codegen_stmt(stmt);
+            let (res, ret) = self.codegen_stmt(stmt);
 
             if ret {
-                return stmt;
+                return res;
             }
         }
-        panic!("We neeed the boolean babe!");
+        
+
     }
 
 
@@ -227,7 +239,7 @@ impl<'a> Codegen <'a>{
             Expr::Bool(b) => self.context.bool_type().const_int(*b as u64, false),
             Expr::Number(i) => self.context.i32_type().const_int(*i as u64, false),
             Expr::Function(name, args) => {
-                let func = self.module.get_function(name).expect("Could not get function");
+                let func = self.module.get_function(name).expect("Function not declared!");
                 let mut codegen_args: Vec<BasicValueEnum> = Vec::with_capacity(args.len());
                 for arg in args {
                     codegen_args.push(self.codegen_expr(arg).into());

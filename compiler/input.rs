@@ -1,5 +1,7 @@
-fn main(a: i32) {
-    return 3;
+fn main() {
+    let a : i32 = 0;
+    
+    return a;
 }
 
 
