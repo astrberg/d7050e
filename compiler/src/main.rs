@@ -26,8 +26,9 @@ fn main() {
     };
     println!("{:#?}", ast);
 
-    Codegen::codegen(&ast);
+    let mut codegen = Codegen::init();
 
+    let gen = codegen.codegen(&ast);
     // let type_res = type_checker::type_check(&ast);
     // match type_res {
     //     Ok(t) => println!("{:?}", t),
