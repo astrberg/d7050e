@@ -10,7 +10,7 @@ mod values;
 mod error;
 mod ast;
 mod interpreter;
-// mod type_checker;
+mod type_checker;
 mod codegen;
 
 use std::io::Read;
@@ -24,20 +24,17 @@ fn main() {
         Ok(p) => p,
         Err(e) => panic!("{:?}", e)
     };
-    println!("{:#?}", ast);
+    // println!("{:#?}", ast);
 
-    let mut codegen = Codegen::init();
+    // let mut codegen = Codegen::init();
 
-    let gen = codegen.codegen(&ast);
-    // let type_res = type_checker::type_check(&ast);
-    // match type_res {
-    //     Ok(t) => println!("{:?}", t),
-    //     Err(e) => println!("{:?}", e),
+    // let gen = codegen.codegen(&ast);
+    match type_checker::type_check(&ast) {
+        Err(e) => println!("{:?}", e),
+        Ok(_) => println!("{:?}", interpreter::interpret(&ast))
 
-    // }
-    // let inter_res = interpreter::interpret(&ast);
-
-    // println!("{:#?}", inter_res);
+    };
+    
 
 
 }

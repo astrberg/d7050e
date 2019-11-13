@@ -9,9 +9,9 @@ fn test_bool(b: bool) -> bool {
         while (a < 5) {
             a = a + 1;
         }
-        return a;
+        return false;
     }
-    return b;
+    return (3 < 4);
 }
 
 fn main() {
